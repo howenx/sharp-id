@@ -1,10 +1,16 @@
 package controllers
 
+import javax.inject._
+import actor.{SMSType, SMS}
+import akka.actor.ActorRef
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc.{Action, Controller}
 import play.api.Logger
 import models.User
+
+import scala.concurrent.ExecutionContext
+
 
 case class UserNameLoginInfo(name: String, passwd: String)
 
@@ -12,7 +18,8 @@ case class UserNameLoginInfo(name: String, passwd: String)
  * Created by handy on 15/10/23.
  * Daumkakao china
  */
-class Api extends Controller {
+@Singleton
+class Api @Inject() (@Named("sms") sms:ActorRef) extends Controller {
 
   /**
    *使用昵称和密码登录
@@ -36,6 +43,9 @@ class Api extends Controller {
 
   def login_user_name = Action { implicit request =>
     val user_data = user_name_login_form.bindFromRequest.get
+    Logger.debug(sms.toString())
+    val s = new SMS("test","test",SMSType.verify)
+    sms ! s
     User.find_by_nickanme(user_data.name, user_data.passwd) match {
       case None =>
         Ok("error")
