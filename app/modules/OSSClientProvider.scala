@@ -10,7 +10,7 @@ import scala.concurrent.Future
 
 /**
  * Created by handy on 15/10/23.
- * Daumkakao china
+ * kakao china
  */
 @Singleton
 class OSSClientProvider @Inject()(configuration: Configuration, lifecycle:ApplicationLifecycle) extends Provider[OSSClient]{
