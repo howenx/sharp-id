@@ -1,21 +1,24 @@
 package controllers
 
-/**
- * Created by handy on 15/10/20.
- * Daumkakao china
- */
+import javax.inject.Inject
+
+import models.User
+import modules.OSSClientProvider
 import play.api._
 import play.api.mvc._
 
-object Application extends Controller {
+/**
+ * Created by handy on 15/10/23.
+ * Daumkakao china
+ */
 
-  def index = Action { implicit request =>
+class Application @Inject() (oss_client : OSSClientProvider) extends Controller {
+
+  def index = Action {
+    val client = oss_client.get
+    Logger.debug(client.toString)
+    Logger.debug(User.find_by_id(1).toString)
     Ok(views.html.index("Your new application is ready."))
-  }
-
-  def login = Action { implicit request =>
-
-    Ok("ok")
   }
 
 }
