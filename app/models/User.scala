@@ -35,19 +35,31 @@ object User {
     }
   }
 
+  def find_by_phone(phone:String):Option[User] = {
+    DB.withConnection() {implicit conn =>
+      SQL("""select user_id, nickname, gender, photo_url from "ID" where phone_num = {phone_num}""").on("phone_num"->phone).as(user *).headOption
+    }
+  }
+
   def find_by_nickanme(nickname:String, passwd:String):Option[User] = {
     DB.withConnection() {implicit conn =>
-      SQL("""select user_id, nickname, gender, photo_url from "ID" where nickname={nickname} and passwd = {passwd}""").on("nickname"->nickname, "passwd"->passwd).as(user *).headOption
+      SQL("""select user_id, nickname, gender, photo_url from "ID" where nickname = {nickname} and passwd = {passwd}""").on("nickname"->nickname, "passwd"->passwd).as(user *).headOption
     }
   }
 
   def find_by_phone(phone:String, passwd:String):Option[User] = {
     DB.withConnection() {implicit conn =>
-      SQL("""select user_id, nickname, gender, photo_url from "ID" """).as(user *).headOption
+      SQL("""select user_id, nickname, gender, photo_url from "ID" where phone_num = {phone_num} and passwd = {passwd}""").on("phone_num"->phone, "passwd"->passwd).as(user *).headOption
     }
   }
 
-  def insert(user:User) ={
+  /**
+   * 简单注册
+   * @param phone
+   * @param passwd
+   * @return
+   */
+  def insert(phone:String, passwd:String) ={
     DB.withConnection() {implicit conn =>
       SQL("""insert into "ID" (nickname, gender """)
     }
