@@ -16,8 +16,8 @@ case class SMS(phone_num:String, code:String, sms_type: sms_type)
  */
 class SMSActor @Inject() (ws: WSClient, configuration: Configuration) extends Actor{
 
-  val account = configuration.getString("send_name");
-  val password = configuration.getString("send_password");
+  val account = configuration.getString("send_name").getOrElse("");
+  val password = configuration.getString("send_password").getOrElse("")
 
   override def receive = {
     case sms:SMS =>
