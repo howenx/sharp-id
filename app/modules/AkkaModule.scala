@@ -1,6 +1,6 @@
 package modules
 
-import actor.SMSActor
+import actor.{OssActor, UserLoginActor, SMSActor}
 import com.google.inject.AbstractModule
 import play.api.libs.concurrent.AkkaGuiceSupport
 
@@ -12,5 +12,7 @@ import play.api.libs.concurrent.AkkaGuiceSupport
 class AkkaModule extends AbstractModule with AkkaGuiceSupport {
   override def configure() ={
     bindActor[SMSActor] ("sms")
+    bindActor[UserLoginActor] ("userLogin")
+    bindActor[OssActor] ("oss")
   }
 }

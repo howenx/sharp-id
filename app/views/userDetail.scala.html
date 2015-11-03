@@ -1,0 +1,94 @@
+@(user : UserMore)
+@head = {
+	<script type="text/javascript" src="assets/js/userDetail.js"></script>
+    <link href="@SystemApplication.STATIC_URL/css/user.css" rel="stylesheet">
+    }
+@body ={
+@header
+<div class="container cont">
+    <div class="row row-user">
+        <div class="col-sm-3 col-xs-3 user-box1">
+            <div class="img-md">
+                <img id="photoUrl" src="@SystemApplication.STATIC_URL/@user.photo_url">
+            </div>
+        </div>
+        <div class="col-sm-9 col-xs-9 user-box2">
+            <h3 id="userName">@Html(user.nickname.trim())</h3>
+            <div class="id-box">
+                <span class="s1">
+		                @if(user.gender.trim()=="M"){
+			                <em>Boy</em>
+			                }else{
+			                <em>Girl</em>
+		                }
+                    <em>生日：@user.birthday.trim()</em>
+                    <em style="color:#000;">ID :@user.id</em>
+                </span>
+            </div>
+            <input type="hidden" id="userId" name="userId" value="@user.id">
+        </div>
+    </div>
+</div>
+
+<div class="container cont2">
+	<div class="row col-sm-12 col-xs-12 row-ipt">
+        <div class="ipt-sure">
+
+        	<div class="span-box">
+        		<span class="s1 clearfix">
+                    <em>原密码:</em>
+                    <input type="password" id="oldPassword" maxlength="20">
+                </span>      
+                <span class="s3 clearfix">
+                    <em>新密码:</em>
+                    <input type="password" id="newPassword" maxlength="20">
+                </span>
+                <span class="s3 clearfix">
+                    <em>再次输入:</em>
+                    <input type="password" id="againPassword" maxlength="20">
+                </span>
+            </div>
+            <div class="user-false" id="passwordMsg"></div>
+            <a class="a-bd a-bd1" onclick="chagePassword()" href="javascript:void(0)">确定</a>
+        </div>
+    </div>
+    <div class="row col-sm-12 col-xs-12 row-ipt">
+        <div class="ipt-nbd">
+            <div class="span-box">
+                <span class="s1 clearfix">
+                    <em class="pull-left">新手机号: </em> 
+                    <input class="pull-left" type="text" id="phoneNum" onkeyup="this.value=this.value.replace(/\D/g,'')" maxlength="11">
+                    <a class="pull-left" id="codeButton" href="javascript:sendCode()">免费获取验证码</a>
+                </span>
+                <span class="s2">
+                    <input placeholder="新手机验证码" type="text" id="codeNew" onkeyup="this.value=this.value.replace(/\D/g,'')" maxlength="6">
+                    <font style="display: none;" id="backCode"></font>
+                    <input placeholder="登录密码或旧手机验证码" type="text" id="codeOld">
+                    <font style="display: none;" id="backCode"></font> 
+                </span>
+            </div>	
+            <div class="user-false" id="codeMsg"></div>
+            <a class="a-bd a-bd2" id="changePhone" href="javascript:void(0)" onclick="changePhone()" style="display: block;">绑定新手机</a>
+        </div>
+    </div>    
+    <div class="row col-sm-12 col-xs-12 row-ipt">
+        <div class="ipt-bd">
+            <div class="span-box">               
+                <span class="s1 clearfix">
+                    <em>账号:</em>
+                    <input placeholder="Email" type="text" id="userEmail" readOnly="readOnly" value="@user.email">
+                </span>
+            </div>
+            <div class=user-false id="emailMsg"></div>
+            <a class="a-bd a-bd3" href="javascript:void(0)" onclick="sendEmail()">账户激活</a>
+        </div>
+    </div>
+    
+</div>
+
+}
+
+@admin(head) {
+    @header()
+	@body
+}

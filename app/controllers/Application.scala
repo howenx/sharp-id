@@ -2,12 +2,11 @@ package controllers
 
 import javax.inject.{Singleton, Named, Inject}
 
-import actor.{SMS, SMSType}
 import akka.actor.ActorRef
-import models.User
 import modules.OSSClientProvider
 import net.spy.memcached.MemcachedClient
 import play.api._
+import play.api.libs.json.{JsBoolean, Json}
 import play.api.mvc._
 
 
@@ -16,17 +15,59 @@ import play.api.mvc._
  * Daumkakao china
  */
 @Singleton
-class Application @Inject() (oss_client : OSSClientProvider, cache_client: MemcachedClient, @Named("sms") sms:ActorRef) extends Controller {
+class Application @Inject() (oss_client : OSSClientProvider, cache_client: MemcachedClient, @Named("sms") sms:ActorRef,configuration: Configuration) extends Controller {
 
   def index = Action {
-    val client = oss_client.get
-    Logger.debug(client.toString)
-    Logger.debug(User.find_by_id(1).toString)
-    Logger.debug(sms.toString())
-    Logger.debug(cache_client.toString)
-    val s = new SMS("test","test",SMSType.verify)
-    sms ! s
-    Ok(views.html.index("Your new application is ready."))
+    Ok(views.html.login.render("http://www.5dsy.cn"))
+  }
+
+  def getUserName = Action {implicit request=>
+    try{
+      val cookie = request.cookies("web_token")
+      cookie match {
+        case null =>
+          Redirect("/toLogin")
+        case _ =>
+          val cacheInfo = cache_client.get(cookie.value.toString)
+          cacheInfo match {
+            case null =>
+              Redirect("/toLogin")
+            case _ =>
+              Ok(Json.obj("if" -> JsBoolean(true), "nickname" -> play.libs.Json.parse(String.valueOf(cacheInfo)).get("nickname").textValue()))
+          }
+      }
+    }catch {
+      case ex:RuntimeException =>
+        Redirect("/toLogin")
+    }
+  }
+
+  def redirect = Action {req =>
+    val url = req.getQueryString("url").getOrElse(SystemApplication.INDEX_PAGE)
+    Logger.info(s"跳转页面 $url ")
+    Redirect(url)
+  }
+
+  def loginOut = Action {implicit request=>
+    try{
+      val cookie = request.cookies("web_token")
+      cookie match {
+        case null =>
+          Redirect("/index")
+        case _ =>
+          val cacheInfo = cache_client.get(cookie.value.toString)
+          cacheInfo match {
+            case null =>
+              Redirect("/index")
+            case _ =>
+              cache_client.delete(cookie.value.toString)
+              Redirect("/index").discardingCookies(DiscardingCookie("web_token","/",Option(configuration.getString("domain").getOrElse(""))))
+          }
+      }
+    }catch {
+      case ex:RuntimeException =>
+        Redirect("/index")
+    }
   }
 
 }

@@ -4,8 +4,43 @@
 
 # Home page
 GET     /                           controllers.Application.index
-
-POST    /api/login                  controllers.Api.login_user_name
+GET     /index                      controllers.Application.index
+GET     /redirect                   controllers.Application.redirect
+GET     /getUserName                controllers.Application.getUserName
+GET     /loginOut                   controllers.Application.loginOut
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+
+#api
+POST    /api/send_code              controllers.Api.send_code
+POST    /api/login_phone_num        controllers.Api.login_phone_num
+POST    /api/login_user_name        controllers.Api.login_user_name
+
+#reg
+GET     /toReg                      controllers.RegApplication.toReg
+POST    /regSendCode                controllers.RegApplication.sendCode
+GET     /getImageCodes/:id    		controllers.RegApplication.getImageCodes(id:Integer)
+POST    /regSubmit                  controllers.RegApplication.regSubmit
+
+#login
+GET     /toLogin                    controllers.LoginApplication.toLogin
+POST    /loginSendCode              controllers.LoginApplication.sendCode
+POST    /loginByTel                 controllers.LoginApplication.loginByTel
+POST    /loginByName                controllers.LoginApplication.loginByName
+
+#resetPassword
+GET     /toResetPassword            controllers.ResetPassWordApplication.toResetPassword
+POST    /resetSendCode              controllers.ResetPassWordApplication.sendCode
+POST    /resetPasswordSubmit        controllers.ResetPassWordApplication.resetPasswordSubmit
+
+#userDetail
+GET     /toUserDetail               controllers.UserDetailApplication.toUserDetail
+POST    /detailSendCode             controllers.UserDetailApplication.sendCode
+POST    /changePhone                controllers.UserDetailApplication.changePhone
+POST    /changePassword             controllers.UserDetailApplication.changePassword
+
+#userChange
+GET     /toUserChange/:msg          controllers.UserChangeApplication.toUserChange(msg:String)
+POST    /changeFormSubmit           controllers.UserChangeApplication.changeFormSubmit
+

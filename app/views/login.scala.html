@@ -1,0 +1,134 @@
+@(url:String)
+@head={
+    <link href="@SystemApplication.STATIC_URL/css/login.css" rel="stylesheet">  
+    <script type="text/javascript" src="/assets/js/userLogin.js"></script>
+    <style>
+    	.add-input{
+    		width:80%;margin:0 auto;
+    	}
+    	
+    	.add-input input{
+    		width:70%;height:47px;border:1px solid #c9c9c9;
+    	}
+    	.add-input img{
+    		width:30%;height:47px;vertical-align:top;
+    	}
+    	
+    	@@media (max-width:768px) {
+    		.add-input{
+    			width:98%;margin:2px auto 0;
+	    	}
+	    	
+	    	.add-input input{
+	    		width:65%;height:35px;border:1px solid #c9c9c9;font-size:12px;
+	    	}
+	    	.add-input img{
+	    		width:35%;height:35px;vertical-align:top;
+	    	}
+    	}
+    	
+    </style> 
+}
+
+@body={
+
+<div class="login">
+   <a href="/index"><img class="login-img" src="@SystemApplication.STATIC_URL/img/logo-login.png" alt="" ></a>
+   <a href="/index"><img class="login-close" src="@SystemApplication.STATIC_URL/img/close2.png" alt=""></a>
+    <div class="tab-fade-one">
+    <ul id="myTab" class="nav nav-tabs login-tab">
+        <li class="active l1" id="phoneLi">
+        	<a href="#phone_login" data-toggle="tab" id="phoneA" onclick="toPhoneLogin()">
+              手机登录
+            </a>           
+        </li>
+        <li class="l2" id="nameLi">
+            <a href="#login" data-toggle="tab" id="nameA">
+              账号登录
+           </a>
+        </li>
+    </ul>
+    
+    <div id="myTabContent" class="tab-content">
+    <div class="tab-pane fade in active tab-fade-two" id="phone_login">
+    
+        <form id="loginTelForm" action="/loginByTel" method="post">
+           <table class="table-s3">
+            <tr>
+                <td class="td1">
+                   <input placeholder="请输入手机号" class="ipt2" type="number" name="phoneNum" id="phoneNum" onkeyup="this.value=this.value.replace(/\D/g,'')" onfocus="onPhone()" maxlength="11"> 
+                </td>
+                <td class="td2">
+                   <button onclick="sendCode()" type="button" class="btn btn-add btn-default  pull-right" id="codeButton">获取短信验证码</button>                      
+                </td>
+            </tr>
+          </table>
+        <div class="add-input" style="">
+        	<input id="imageCode" name="imageCode" value="" style="" placeholder="请输入图形验证码，看不清点击验证码换一张"><img style="" src="/getImageCodes/@Math.round(Math.random()*1000000)" onclick="getImageCode()" id="imageCodeImage">
+        </div>
+          <table class="table-s4">
+            <tr>
+                <td class="td1">
+                    <input placeholder="请输入验证码" class="ipt2" type="number" name="code" id="code" onkeyup="this.value=this.value.replace(/\D/g,'')" maxlength="6" onfocus="onPhone()">
+                </td>
+                
+                <td class="td2">
+                </td>
+            </tr>
+          </table>
+              <div id="codeErrorMsg" class="yanzheng" ></div>
+          <div class="yanzheng" style="display: none;" id="codeMsg"></div>
+          <input type="hidden" id="returnUrl" name="returnUrl" value="@url" >
+         </form>
+          <table class="table-s2 table-s5">
+            <tr>
+                <td class="td2">
+                    <form class="navbar-form navbar-left navbar-form-sy form-login navbar-form-tb pull-right" role="search" >
+                        <button onclick="loginByTel()" id="telButton" name ="telButton" type="button" class="btn btn-default btn-login">登录</button>
+                  </form>
+                </td>
+            </tr>
+          </table>
+          
+        </div>
+        
+        <div class="tab-pane fade" id="login">
+         <form  id="loginNameForm" method="post" action="/login_name">
+          <table class="table-s1">
+            <tr>
+                <td class="td1">
+                    <input placeholder="请输入手机号/账号" class="ipt1" type="text" id="name" name="name" onfocus="onName()">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input placeholder="请输入密码" class="ipt1" type="password" id="password" name="password" onfocus="onName()">
+                </td>
+            </tr>
+          </table>
+          <div id="nameError" class="yanzheng"></div>
+          <div class="yanzheng" style="display: none;" id="nameMsg"></div>
+          </form>
+          <table class="table-s2 table-s5">
+            <tr>
+                <td class="td2">
+                    <form class="navbar-form navbar-left navbar-form-sy navbar-form-tb form-login pull-right" role="search" >
+                        <button onclick="loginByName()"  type="button" class="btn btn-default btn-login">登录</button>
+                  </form>
+                </td>
+            </tr>
+          </table>
+          <div class="login-add-div">
+          <a class="a-reg" href="/toReg?url=@url">点击注册</a>
+          <a class="a-login" href="/toResetPassword">忘记密码？</a>
+          </div>
+        </div>
+    </div>
+    
+    </div>
+</div>
+
+}
+@admin(head) {
+	@body
+}
