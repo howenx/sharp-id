@@ -7,13 +7,14 @@ import models.{User}
 import modules.OSSClientProvider
 import net.spy.memcached.MemcachedClient
 import org.apache.commons.lang3.StringUtils
-import play.api.Logger
+import play.api.{Configuration, Logger}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.Codecs
 import play.api.libs.json.{JsString, JsBoolean,Json}
 import play.api.mvc.{Action, Controller}
-import utils.SystemService
+import play.libs.mailer.{MailerPlugin, Email}
+import utils.{SystemService}
 
 /**
  * Created by china_005 on 15/10/28.
@@ -25,7 +26,9 @@ case class ChangePhoneForm(phoneNum:String,newCode:String,oldCode :String,userId
 
 case class ChangePasswordForm(newPassword:String,oldPassword:String,userId:Long,againPassword:String)
 
-class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_client: MemcachedClient, @Named("sms") sms:ActorRef) extends  Controller{
+case class SendEmailForm(id:Long,email:String)
+
+class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_client: MemcachedClient, @Named("sms") sms:ActorRef,configuration: Configuration) extends  Controller{
 
   val detailSendCodeForm :Form[DetailSendCodeForm] = Form(
     mapping(
@@ -51,9 +54,16 @@ class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_cli
     )(ChangePasswordForm.apply)(ChangePasswordForm.unapply)
   )
 
+  val sendEmailForm :Form[SendEmailForm] = Form(
+    mapping(
+      "id" ->longNumber,
+      "email" ->nonEmptyText
+    )(SendEmailForm.apply)(SendEmailForm.unapply)
+  )
+
   def toUserDetail = Action{ implicit request=>
     try{
-      val cookie = request.cookies("web_token")
+      val cookie = request.cookies(Systemcontents.WEB_TOKEN)
       cookie match {
         case null =>
           Redirect("/toLogin?url=toUserDetail")
@@ -84,17 +94,18 @@ class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_cli
     val userId:Long = data.userId
     val phoneNum:String = data.phoneNum
     if(!SystemService.checkPhoneNum(phoneNum)){//检查手机号码格式
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码不符合规则")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
     }else{
+      //判定修改的是本人的信息
         try{
-          val cookie = request.cookies("web_token")
+          val cookie = request.cookies(Systemcontents.WEB_TOKEN)
           cookie match {
             case null =>
               Redirect("/toLogin?url=toUserDetail")
             case _ =>
               val cacheInfo = cache_client.get(cookie.value.toString)
               if(cacheInfo==null || userId!=(play.libs.Json.parse(String.valueOf(cacheInfo))).get("user_id").intValue())
-                Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户信息读取错误！")))
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
           }
         }catch {
           case ex:RuntimeException =>
@@ -102,7 +113,7 @@ class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_cli
         }
       User.find_by_phone(phoneNum) match {
         case Some(user) =>
-          Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码已经注册")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_EXTISTS)))
         case None =>
           User.find_by_id_more(userId) match{
             case Some(user)=>
@@ -116,9 +127,9 @@ class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_cli
               cache_client.set(Codecs.md5(("detailOld"+user.phone_num.trim).getBytes()),180,oldCode)//code存入缓存
               Logger.debug(s"更换旧手机:${user.phone_num.trim} 发送验证码:$oldCode")
 
-              Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("发送成功")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_SUCCESS)))
             case None =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户信息读取错误")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
           }
       }
     }
@@ -129,20 +140,21 @@ class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_cli
     val phoneNum = data.phoneNum
     val newCode = data.newCode
     val oldCOde = data.oldCode
-    val userId = data.userId
-    if (StringUtils.isEmpty(phoneNum) || StringUtils.isEmpty(newCode) || StringUtils.isEmpty(oldCOde) || userId == null) {
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证码不能为空")))
+    val userId:Long = data.userId
+    if (StringUtils.isEmpty(phoneNum) || StringUtils.isEmpty(newCode) || StringUtils.isEmpty(oldCOde)) {
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }
     else {
+      //判定修改的是本人的信息
       try{
-        val cookie = request.cookies("web_token")
+        val cookie = request.cookies(Systemcontents.WEB_TOKEN)
         cookie match {
           case null =>
             Redirect("/toLogin?url=toUserDetail")
           case _ =>
             val cacheInfo = cache_client.get(cookie.value.toString)
             if(cacheInfo==null || userId!=(play.libs.Json.parse(String.valueOf(cacheInfo))).get("user_id").intValue())
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户信息读取错误！")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
         }
       }catch {
         case ex:RuntimeException =>
@@ -150,57 +162,153 @@ class UserDetailApplication @Inject() (oss_client : OSSClientProvider, cache_cli
       }
       User.find_by_id_more(userId) match {
         case Some(user) =>
-          Logger.info(cache_client.get(Codecs.md5(("detailNew"+phoneNum).getBytes())).toString+"======"+cache_client.get(Codecs.md5(("detailOld"+user.phone_num.trim).getBytes())).toString)
-          if (cache_client.get(Codecs.md5(("detailNew"+phoneNum).getBytes()))==null||cache_client.get(Codecs.md5(("detailOld"+user.phone_num.trim).getBytes()))==null
-          || !cache_client.get(Codecs.md5(("detailNew"+phoneNum).getBytes())).equals(newCode)|| !cache_client.get(Codecs.md5(("detailOld"+user.phone_num.trim).getBytes())).equals(oldCOde)) {
-            Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证码错误")))
-          }else {
-            if (User.change_phone(phoneNum, userId) > 0) {
-              Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("修改成功")))
-            } else {
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("修改失败")))
+          val cacheNew = cache_client.get(Codecs.md5(("detailNew"+phoneNum).getBytes()))
+          val cacheOld = cache_client.get(Codecs.md5(("detailOld"+user.phone_num.trim).getBytes()))
+          if (cacheNew!=null && cacheNew.equals(newCode)) {
+            if(cacheOld!=null && cacheOld.equals(oldCOde)){
+              if (User.change_phone(phoneNum, userId) > 0) {
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_SUCCESS)))
+              } else {
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_FAILED)))
+              }
+            }
+            else {
+              User.find_by_phone(user.phone_num.trim,oldCOde) match{
+                case Some(user) =>
+                  if (User.change_phone(phoneNum, userId) > 0) {
+                    Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_SUCCESS)))
+                  } else {
+                    Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_FAILED)))
+                  }
+                case None =>
+                  Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
+              }
             }
           }
+          else {
+            Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
+          }
         case None =>
-          Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户信息读取错误")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
       }
     }
   }
 
   def changePassword = Action { implicit request =>
     val data = changePasswordForm.bindFromRequest.get
-    val id = data.userId
+    val id :Long = data.userId
     val newPassword = data.newPassword
     val oldPassword = data.oldPassword
     val againPassword = data.againPassword
-    if (StringUtils.isEmpty(newPassword) || StringUtils.isEmpty(oldPassword) || StringUtils.isEmpty(againPassword) || id == null) {
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("密码不能为空")))
+    if (StringUtils.isEmpty(newPassword) || StringUtils.isEmpty(oldPassword) || StringUtils.isEmpty(againPassword)) {
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString("密码不能为空")))
     }
     else if (!newPassword.equals(againPassword)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("两次密码不一致")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString("两次密码不一致")))
     }
     else if (oldPassword.equals(againPassword)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("新旧密码不能一致")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString("新旧密码不能一致")))
     }
     else{
       try{
-        val cookie = request.cookies("web_token")
+        val cookie = request.cookies(Systemcontents.WEB_TOKEN)
         cookie match {
           case null =>
             Redirect("/toLogin?url=toUserDetail")
           case _ =>
             val cacheInfo = cache_client.get(cookie.value.toString)
             if(cacheInfo==null || id!=(play.libs.Json.parse(String.valueOf(cacheInfo))).get("user_id").intValue())
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户信息读取错误！")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
         }
       }catch {
         case ex:RuntimeException =>
           Redirect("/toLogin?url=toUserDetail")
       }
       if(User.change_password(newPassword,id,oldPassword)>0){
-        Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("修改成功")))
+        Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_SUCCESS)))
       }else{
-        Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("修改失败")))
+        Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_FAILED)))
+      }
+    }
+  }
+
+  def sendEmail = Action{ implicit request =>
+    val data = sendEmailForm.bindFromRequest().get
+    Logger.info(data.toString)
+    val id:Long = data.id
+    val email:String = data.email.trim
+    if(StringUtils.isEmpty(email) || !SystemService.checkEmail(email)){
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.EMAIL_TYPE_ERROR)))
+    }
+    else {
+      try {
+        val cookie = request.cookies(Systemcontents.WEB_TOKEN)
+        cookie match {
+          case null =>
+            Redirect("/toLogin?url=toUserDetail")
+          case _ =>
+            val cacheInfo = cache_client.get(cookie.value.toString)
+            if (cacheInfo == null || id != (play.libs.Json.parse(String.valueOf(cacheInfo))).get("user_id").intValue())
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
+        }
+      } catch {
+        case ex: RuntimeException =>
+          Redirect("/toLogin?url=toUserDetail")
+      }
+      User.find_by_id_more(id) match{
+        case Some(user) =>
+          if(user.active.equals("Y")){Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.EMAIL_ACTIVE_OREADY)))}
+          else{
+            Logger.info("准备发送邮件")
+            val emailSender = new Email
+            emailSender.setSubject("HMM账户激活")
+            emailSender.setFrom(configuration.getString("emailFrom").getOrElse(""))
+            emailSender.addTo(email.trim)
+            val securityStr: String = Codecs.md5((id+email.trim).getBytes)
+            emailSender.setBodyHtml(SystemService.getEmailHtml(configuration.getString("activeUrl").getOrElse("")+securityStr))
+            try {
+              val result: String = MailerPlugin.send(emailSender)
+              if (StringUtils.isEmpty(result)) {
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_EMAIL_FAILED)))
+              }
+              else {
+                cache_client.set(securityStr, 30 * 60, id)
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_EMAIL_SUCCESS)))
+              }
+            }
+            catch {
+              case e: Exception => {
+                Logger.info(e.toString)
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_EMAIL_FAILED)))
+              }
+            }
+          }
+        case None =>
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_INFO_ERROR)))
+      }
+    }
+  }
+
+  def active(str:String) = Action{ implicit request =>
+    if(StringUtils.isEmpty(str)){
+      Ok(views.html.active.render(Systemcontents.EMAIL_ACTIVE_FAILED))
+    }else if(cache_client.get(str)==null){
+      Ok(views.html.active.render(Systemcontents.EMAIL_ACTIVE_FAILED))
+    }else {
+      val id = cache_client.get(str).toString.toLong
+      User.find_by_id_more(id) match {
+        case Some(user) =>
+          if(Codecs.md5((user.id+user.email).getBytes).equals(str)){
+            if(User.active(id)>0){
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.EMAIL_ACTIVE_SUCCESS)))
+            }else{
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.EMAIL_ACTIVE_FAILED)))
+            }
+          }else{
+            Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.EMAIL_ACTIVE_FAILED)))
+          }
+        case None =>
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.EMAIL_ACTIVE_FAILED)))
       }
     }
   }

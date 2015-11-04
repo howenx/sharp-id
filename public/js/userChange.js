@@ -16,7 +16,6 @@
     function checkEmail(){
     	booleanEamil = true;
      	var email =  document.getElementById("email").value.trim();
-     	String.prototype.lenB = function(){return this.replace(/[^\x00-\xff]/g,"**").length;}  
     	var check = /^([0-9A-Za-z\-_\.]+)@([0-9a-z]+\.[a-z]{2,3}(\.[a-z]{2})?)$/g;
     	if(email!=null&&email!=""&&!check.test(email)){
     		document.getElementById("errorMsg").innerText="账户不符合邮件规则";
@@ -28,9 +27,8 @@
     //校验昵称
     var booleanUserName = true;
     function checkLength() {  
-        String.prototype.lenB = function(){return this.replace(/[^\x00-\xff]/g,"**").length;}  
         var userName = document.getElementById("nickname").value;
-        if(userName.lenB()>20){
+        if(userName.replace(/[^\x00-\xff]/g,"**").length>20){
     		document.getElementById("errorMsg").innerText="昵称最多输入10个汉字";
     		booleanUserName = false;
         }else{

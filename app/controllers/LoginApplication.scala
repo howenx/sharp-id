@@ -50,7 +50,7 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
   )
 
   def toLogin = Action{req =>
-    val url = req.getQueryString("url").getOrElse(SystemApplication.INDEX_PAGE)
+    val url = req.getQueryString("url").getOrElse(Systemcontents.INDEX_PAGE)
     Ok(views.html.login.render(String.valueOf(url)))
   }
 
@@ -60,18 +60,18 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
     val imageCode:String = data.imageCode.trim
     val phoneNum:String = data.phoneNum.trim
 
-    if(StringUtils.isEmpty(imageCode) || cache_client.get(imageCode.toUpperCase)==null){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("图形验证码错误")))
+    if(StringUtils.isEmpty(imageCode) || cache_client.get(imageCode.toUpperCase)==null){//都用大写来比较验证码
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.IMAGE_CODE_ERROR)))
     }
     else if(!SystemService.checkPhoneNum(phoneNum)){//检查手机号码格式
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码不符合规则")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
     }
     else{
       val code = String.valueOf((100000 + Math.random * 900000).toInt)//生成code
       sms ! SMS(phoneNum,code,SMSType.comm)//actor发送短信
       cache_client.set(Codecs.md5(("login"+phoneNum).getBytes()),180,code)//code存入缓存
       Logger.debug(s"登录手机:$phoneNum 发送验证码:$code")
-      Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("发送成功")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_SUCCESS)))
     }
   }
 
@@ -80,9 +80,8 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
     val code:String = data.code.trim
     val phoneNum:String = data.phoneNum.trim
     val cacheCode = cache_client.get(Codecs.md5(("login"+phoneNum).getBytes()))
-    Logger.debug("得到参数code："+code+"手机号码："+phoneNum+"缓存code："+cacheCode)
     if(StringUtils.isEmpty(code)||StringUtils.isEmpty(phoneNum)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码或验证码不能为空!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }
     else if(cacheCode!=null&&cacheCode.equals(code)){
       val timeNow = new SimpleDateFormat("YYYY-MM-dd hh:mm:ss").format(new Timestamp((new DateTime()).withMillisOfSecond(0).getMillis))
@@ -90,11 +89,11 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
       User.find_by_phone(phoneNum) match {
         //已经存在的用户自动登录
         case Some(userInfo) =>
-//actor异步 登录成功后跳转页面 导致cache里面没有存放用户信息 页面
-//        userLogin!UserLoginSetCache(userInfo,request.remoteAddress,securityStr)
+          //actor异步 登录成功后跳转页面 导致cache里面没有存放用户信息 页面
+          //userLogin!UserLoginSetCache(userInfo,request.remoteAddress,securityStr)
           setCache(userInfo,request.remoteAddress,securityStr)
-          Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功"))).
-            withCookies(Cookie("web_token", Codecs.md5(securityStr.getBytes()), Option(Int.MinValue),"/",Option(configuration.getString("domain").getOrElse(""))))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS))).
+            withCookies(Cookie(Systemcontents.WEB_TOKEN, Codecs.md5(securityStr.getBytes()), Option(Int.MinValue),"/",Option(configuration.getString("domain").getOrElse(""))))
 
         //未注册的用户自动注册并登陆
         case None =>
@@ -107,22 +106,21 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
                   case Some(userInfo) =>
 //                  userLogin!UserLoginSetCache(userInfo,request.remoteAddress,securityStr)
                     setCache(userInfo,request.remoteAddress,securityStr)
-                    Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功"))).
-                      withCookies(Cookie("web_token", Codecs.md5(securityStr.getBytes()), Option(Int.MinValue),"/",Option(configuration.getString("domain").getOrElse(""))))
-
+                    Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS))).
+                      withCookies(Cookie(Systemcontents.WEB_TOKEN, Codecs.md5(securityStr.getBytes()), Option(Int.MinValue),"/",Option(configuration.getString("domain").getOrElse(""))))
                   case None =>
-                    Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("恭喜你你找到了一个NB的错误，手机号码已经注册成功了怎么还查询不到？!")))
+                    Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString("恭喜你你找到了一个NB的错误，手机号码已经注册成功了怎么还查询不到？!")))
                 }
               }else{
-                Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("注册失败!")))
+                Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.REG_FAILED)))
               }
             case None =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("注册失败")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.REG_FAILED)))
           }
       }
     }
     else {
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证码错误!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }
   }
 
@@ -131,7 +129,7 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
     val name: String = data.name.trim
     val passwd: String = data.passwd.trim
     if (StringUtils.isEmpty(name) || StringUtils.isEmpty(passwd)) {
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户名密码不能为空!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
     }
     else {
       val timeNow = new SimpleDateFormat("YYYY-MM-dd hh:mm:ss").format(new Timestamp((new DateTime()).withMillisOfSecond(0).getMillis))
@@ -144,29 +142,29 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
             case Some(userInfo) =>
 //              userLogin ! UserLoginSetCache(userInfo, request.remoteAddress, securityStr)
               setCache(userInfo,request.remoteAddress,securityStr)
-              Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功"))).
-                withCookies(Cookie("web_token", Codecs.md5(securityStr.getBytes), Option(Int.MinValue), "/", Option(configuration.getString("domain").getOrElse(""))))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS))).
+                withCookies(Cookie(Systemcontents.WEB_TOKEN, Codecs.md5(securityStr.getBytes), Option(Int.MinValue), "/", Option(configuration.getString("domain").getOrElse(""))))
             case None =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户密码错误!")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
           }
         case email =>
           User.find_by_email(name,passwd)match{
             case Some(userInfo)=>
 //              userLogin!UserLoginSetCache(userInfo,request.remoteAddress,securityStr)
               setCache(userInfo,request.remoteAddress,securityStr)
-              Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
             case None =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户密码错误")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
           }
         case _ =>
           User.find_by_nickname(name,passwd) match {
             case Some(userInfo) =>
 //              userLogin ! UserLoginSetCache(userInfo, request.remoteAddress, securityStr)
               setCache(userInfo,request.remoteAddress,securityStr)
-              Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功"))).
-                withCookies(Cookie("web_token", Codecs.md5(securityStr.getBytes), Option(Int.MinValue), "/", Option(configuration.getString("domain").getOrElse(""))))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS))).
+                withCookies(Cookie(Systemcontents.WEB_TOKEN, Codecs.md5(securityStr.getBytes), Option(Int.MinValue), "/", Option(configuration.getString("domain").getOrElse(""))))
             case None =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户密码错误!")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
           }
       }
     }

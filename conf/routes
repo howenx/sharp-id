@@ -14,6 +14,8 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 
 #api
 POST    /api/send_code              controllers.Api.send_code
+POST    /api/reg                    controllers.Api.reg
+POST    /api/reset_password         controllers.Api.reset_password
 POST    /api/login_phone_num        controllers.Api.login_phone_num
 POST    /api/login_user_name        controllers.Api.login_user_name
 
@@ -39,6 +41,8 @@ GET     /toUserDetail               controllers.UserDetailApplication.toUserDeta
 POST    /detailSendCode             controllers.UserDetailApplication.sendCode
 POST    /changePhone                controllers.UserDetailApplication.changePhone
 POST    /changePassword             controllers.UserDetailApplication.changePassword
+POST    /sendEmail                  controllers.UserDetailApplication.sendEmail
+POST    /active/:str                controllers.UserDetailApplication.active(str:String)
 
 #userChange
 GET     /toUserChange/:msg          controllers.UserChangeApplication.toUserChange(msg:String)

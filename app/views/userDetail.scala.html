@@ -1,7 +1,7 @@
 @(user : UserMore)
 @head = {
 	<script type="text/javascript" src="assets/js/userDetail.js"></script>
-    <link href="@SystemApplication.STATIC_URL/css/user.css" rel="stylesheet">
+    <link href="@Systemcontents.STATIC_URL/css/user.css" rel="stylesheet">
     }
 @body ={
 @header
@@ -9,7 +9,7 @@
     <div class="row row-user">
         <div class="col-sm-3 col-xs-3 user-box1">
             <div class="img-md">
-                <img id="photoUrl" src="@SystemApplication.STATIC_URL/@user.photo_url">
+                <img id="photoUrl" src="@Systemcontents.STATIC_URL/@user.photo_url">
             </div>
         </div>
         <div class="col-sm-9 col-xs-9 user-box2">

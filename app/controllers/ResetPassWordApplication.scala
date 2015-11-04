@@ -43,10 +43,10 @@ class ResetPassWordApplication @Inject() (oss_client : OSSClientProvider, cache_
     val phoneNum:String = data.phoneNum.trim
 
     if(StringUtils.isEmpty(imageCode) || cache_client.get(imageCode.toUpperCase)==null){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("图形验证码错误")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.IMAGE_CODE_ERROR)))
     }
     else if(!SystemService.checkPhoneNum(phoneNum)){//检查手机号码格式
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码不符合规则")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
     }else{
       User.find_by_phone(phoneNum) match {
         case Some(user) =>
@@ -54,9 +54,9 @@ class ResetPassWordApplication @Inject() (oss_client : OSSClientProvider, cache_
           sms ! SMS(phoneNum,code,SMSType.comm)//actor发送短信
           cache_client.set(Codecs.md5(("resetPasswd"+phoneNum).getBytes()),180,code)//code存入缓存
           Logger.debug(s"重置密码手机:$phoneNum 发送验证码:$code")
-          Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("发送成功")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_SUCCESS)))
         case None =>
-          Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码未注册")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_NO_EXTISTS)))
 
       }
     }
@@ -73,20 +73,20 @@ class ResetPassWordApplication @Inject() (oss_client : OSSClientProvider, cache_
     val phoneNum:String = data.phoneNum.trim
     val cacheCode = cache_client.get(Codecs.md5(("resetPasswd"+phoneNum).getBytes()))
     if(StringUtils.isEmpty(code)||StringUtils.isEmpty(phoneNum)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码或验证码不能为空!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }else if(cacheCode!=null&&cacheCode.equals(code)){
       val passwd = String.valueOf((100000 + Math.random * 900000).toInt)//生产密码
       val rows = User.reset_password(phoneNum,passwd)//重置密码
       if(rows>0){
         sms ! SMS(phoneNum,passwd,SMSType.resetPasswd)//actor发送短信
-        Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("添加成功!")))
+        Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_SUCCESS)))
       }
       else{
-        Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("重置失败")))
+        Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_FAILED)))
       }
 
     }else {
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证码错误!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }
   }
 }

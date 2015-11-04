@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "com.aliyun.oss" % "aliyun-sdk-oss" % "2.0.1",
   "com.typesafe.play" %% "anorm" % "2.5.0",
-  "com.typesafe.play" %% "play-mailer" % "2.4.0-RC1",
+  "com.typesafe.play" % "play-mailer_2.11" % "2.4.0",
   "com.github.mumoshu" %% "play2-memcached-play24" % "0.7.0"
 
 )

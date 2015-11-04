@@ -144,4 +144,10 @@ object User {
     }
   }
 
+  def active(id:Long):Int = {
+    DB.withConnection() { implicit conn =>
+      SQL(""" update "ID" set "active_YN"={active} where where user_id={user_id}""").on("active"->"Y","user_id"->id).executeUpdate()
+    }
+  }
+
 }

@@ -113,21 +113,16 @@ function chagePassword(){
 }
 
 function sendEmail(){
-	var email = document.getElementById("email").value;
+	var email = document.getElementById("userEmail").value;
 	var userId = document.getElementById("userId").value;
-	var activeYN = document.getElementById("activeYN").value;
 	if(email==null||email==""){
 		document.getElementById("emailMsg").innerHTML="账户为空不能激活";
 		return false;
 	}
-	if(activeYN=="Y"){
-		document.getElementById("emailMsg").innerHTML="账户已经激活";
-		return false;
-	}
-	$.ajax({  
+	$.ajax({
         type:"POST",
         url:"/sendEmail",
-        data:"email="+email+"&userId="+userId,
+        data:"email="+email+"&id="+userId,
         success:function(data){  
 	       	document.getElementById("emailMsg").innerHTML=data['back'];
 		 }

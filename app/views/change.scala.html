@@ -1,13 +1,13 @@
 @(user:UserMore,msg:String)
 @head={
-    <link href="@SystemApplication.STATIC_URL/css/amend.css" rel="stylesheet">
+    <link href="@Systemcontents.STATIC_URL/css/amend.css" rel="stylesheet">
     <script type="text/javascript" src="/assets/js/userChange.js" ></script>
     }
 @body={
 <div class="container reg-cont">
     <div class="reg reg-xg">
 	      <div class="tx">
-	            <img src="@SystemApplication.STATIC_URL@user.photo_url.trim()" id="photoUrl">
+	            <img src="@Systemcontents.STATIC_URL@user.photo_url.trim()" id="photoUrl">
 	      </div>
 	      <div class="login-regbox">
         	<form id="changeForm" method="post" action="/changeFormSubmit" enctype="multipart/form-data" >

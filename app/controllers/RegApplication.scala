@@ -75,27 +75,27 @@ class RegApplication @Inject() (oss_client : OSSClientProvider, cache_client: Me
         val phoneNum:String = data.phoneNum.trim
 
         if(StringUtils.isEmpty(imageCode) || cache_client.get(imageCode.toUpperCase)==null){
-          Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("图形验证码错误")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.IMAGE_CODE_ERROR)))
         }
         else if(!SystemService.checkPhoneNum(phoneNum)){//检查手机号码格式
-          Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码不符合规则")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
         }else{
           User.find_by_phone(phoneNum) match {
             case Some(user) =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码已经注册")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_EXTISTS)))
             case None =>
               val code = String.valueOf((100000 + Math.random * 900000).toInt)//生成code
               sms ! SMS(phoneNum,code,SMSType.comm)//actor发送短信
               cache_client.set(Codecs.md5(("reg"+phoneNum).getBytes()),180,code)//code存入缓存
               Logger.debug(s"注册手机:$phoneNum 发送验证码:$code")
-              Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("发送成功")))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.SEND_SUCCESS)))
           }
         }
   }
 
   //跳转注册页面
   def toReg = Action { implicit request =>
-    val url = request.getQueryString("url").getOrElse(SystemApplication.INDEX_PAGE)
+    val url = request.getQueryString("url").getOrElse(Systemcontents.INDEX_PAGE)
     Ok(views.html.reg.render(String.valueOf(url)))
   }
 
@@ -104,20 +104,20 @@ class RegApplication @Inject() (oss_client : OSSClientProvider, cache_client: Me
     val code:String = data.code.trim
     val phoneNum:String = data.phoneNum.trim
     val cacheCode = cache_client.get(Codecs.md5(("reg"+phoneNum).getBytes()))
-    Logger.debug("得到参数code："+code+"手机号码："+phoneNum+"缓存code："+cacheCode)
     if(StringUtils.isEmpty(code)||StringUtils.isEmpty(phoneNum)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码或验证码不能为空!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }else if(cacheCode!=null&&cacheCode.equals(code)){
-      val passwd = String.valueOf((100000 + Math.random * 900000).toInt)//生产密码
-      User.insert(phoneNum,passwd,request.remoteAddress) match{
+      val password = String.valueOf((100000 + Math.random * 900000).toInt)//生产密码
+      User.insert(phoneNum,password,request.remoteAddress) match {
         case Some(id) =>
-          sms ! SMS(phoneNum,passwd,SMSType.passwd)//actor发送短信
-          Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("注册成功!")))
+          sms ! SMS(phoneNum,password,SMSType.passwd)//actor发送短信
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.REG_SUCCESS)))
         case None =>
-          Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("注册失败!")))
+          Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.REG_FAILED)))
       }
+
     }else {
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证码错误!")))
+      Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }
   }
 

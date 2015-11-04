@@ -18,12 +18,12 @@ import play.api.mvc._
 class Application @Inject() (oss_client : OSSClientProvider, cache_client: MemcachedClient, @Named("sms") sms:ActorRef,configuration: Configuration) extends Controller {
 
   def index = Action {
-    Ok(views.html.login.render("http://www.5dsy.cn"))
+    Ok(views.html.login.render(Systemcontents.INDEX_PAGE))
   }
 
   def getUserName = Action {implicit request=>
     try{
-      val cookie = request.cookies("web_token")
+      val cookie = request.cookies(Systemcontents.WEB_TOKEN)
       cookie match {
         case null =>
           Redirect("/toLogin")
@@ -33,7 +33,7 @@ class Application @Inject() (oss_client : OSSClientProvider, cache_client: Memca
             case null =>
               Redirect("/toLogin")
             case _ =>
-              Ok(Json.obj("if" -> JsBoolean(true), "nickname" -> play.libs.Json.parse(String.valueOf(cacheInfo)).get("nickname").textValue()))
+              Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.RESULT_MESSAGE -> play.libs.Json.parse(String.valueOf(cacheInfo)).get("nickname").textValue()))
           }
       }
     }catch {
@@ -43,14 +43,14 @@ class Application @Inject() (oss_client : OSSClientProvider, cache_client: Memca
   }
 
   def redirect = Action {req =>
-    val url = req.getQueryString("url").getOrElse(SystemApplication.INDEX_PAGE)
+    val url = req.getQueryString("url").getOrElse(Systemcontents.INDEX_PAGE)
     Logger.info(s"跳转页面 $url ")
     Redirect(url)
   }
 
   def loginOut = Action {implicit request=>
     try{
-      val cookie = request.cookies("web_token")
+      val cookie = request.cookies(Systemcontents.WEB_TOKEN)
       cookie match {
         case null =>
           Redirect("/index")
@@ -61,7 +61,7 @@ class Application @Inject() (oss_client : OSSClientProvider, cache_client: Memca
               Redirect("/index")
             case _ =>
               cache_client.delete(cookie.value.toString)
-              Redirect("/index").discardingCookies(DiscardingCookie("web_token","/",Option(configuration.getString("domain").getOrElse(""))))
+              Redirect("/index").discardingCookies(DiscardingCookie(Systemcontents.WEB_TOKEN,"/",Option(configuration.getString("domain").getOrElse(""))))
           }
       }
     }catch {

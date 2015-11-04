@@ -10,10 +10,10 @@
                 <span class="icon-bar"></span>
             </button>
             <a href="javascript:void(0);" style="display: block" class="namepop" onclick="show();">
-                <img class="logoimg" src="@SystemApplication.STATIC_URL/img/yhu.png"></img>
+                <img class="logoimg" src="@Systemcontents.STATIC_URL/img/yhu.png"></img>
             </a>
             <div id="name" class="mobilepop">
-                <img src="@SystemApplication.STATIC_URL/img/arrow2.png">
+                <img src="@Systemcontents.STATIC_URL/img/arrow2.png">
 				<span>
 					<a href="/toUserDetail">用户中心</a>
 				</span>
@@ -28,31 +28,31 @@
 				</span>
             </div>
             <a class="navbar-brand navbar-logo" href="/">
-                <img src="@SystemApplication.STATIC_URL/img/logo.png">
+                <img src="@Systemcontents.STATIC_URL/img/logo.png">
             </a>
         </div>
 
         <!-- 导航条 -->
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right navbar-ul">
-                <li><a href="@SystemApplication.INDEX_PAGE/game-all">游戏</a></li>
-                <li><a href="@SystemApplication.INDEX_PAGE/notice">公告</a></li>
-                <li><a href="@SystemApplication.INDEX_PAGE/activity">活动</a></li>
-                <li><a href="@SystemApplication.BILLING_PAGE/recharge">充值</a></li>
-                <li><a href="@SystemApplication.INDEX_PAGE/customerservice">客服</a></li>
+                <li><a href="@Systemcontents.INDEX_PAGE/game-all">游戏</a></li>
+                <li><a href="@Systemcontents.INDEX_PAGE/notice">公告</a></li>
+                <li><a href="@Systemcontents.INDEX_PAGE/activity">活动</a></li>
+                <li><a href="@Systemcontents.BILLING_PAGE/recharge">充值</a></li>
+                <li><a href="@Systemcontents.INDEX_PAGE/customerservice">客服</a></li>
                 <li class="l8" id="nav_userinfo_id">
                     <form
                             class="clearfix navbar-form navbar-left navbar-form-sy clearfix"
                             role="search">
                         <button onclick="poptck()" type="button"
                                 class="btn btn-default btn-s1 btn-add btn-add2">
-                            <img src="@SystemApplication.STATIC_URL/img/yhu.png"></img> <span id="nickname"></span>
+                            <img src="@Systemcontents.STATIC_URL/img/yhu.png"></img> <span id="headerNickName"></span>
                         </button>
                         <button onclick="loginOut()" type="button"
                                 class="btn btn-default btn-s1">退出</button>
                     </form>
                     <div class="tck" id="tck" style="display: none;">
-                        <img src="@SystemApplication.STATIC_URL/img/arrow2.png">
+                        <img src="@Systemcontents.STATIC_URL/img/arrow2.png">
 						<span>
 							<a href="/toUserDetail">用户中心</a>
 						</span> 
@@ -84,7 +84,7 @@ $(document).ready(function(){$.ajax({
         url:"/getUserName",
         success:function(data){
         	if(data['if']){
-        		document.getElementById("nickname").innerHTML=data['nickname']
+        		document.getElementById("headerNickName").innerHTML=data['back']
         	}
 		 }
  	});

@@ -13,7 +13,7 @@ import play.api.{Logger, Configuration}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.{Action, Controller}
-import utils.{Systemcontents, StringUtil, SystemService}
+import utils.SystemService
 
 
 /**
@@ -37,7 +37,7 @@ class UserChangeApplication @Inject() (oss_client : OSSClientProvider, cache_cli
 
   def toUserChange(msg:String) = Action{ implicit request=>
     try{
-      val cookie = request.cookies("web_token")
+      val cookie = request.cookies(Systemcontents.WEB_TOKEN)
       cookie match {
         case null =>
           Redirect("/toLogin?url=toUserChange/change")
@@ -75,7 +75,7 @@ class UserChangeApplication @Inject() (oss_client : OSSClientProvider, cache_cli
     var active = "N"
     if(!SystemService.checkEmail(email)){
       Redirect("/toUserChange/1000")
-    }else if (!StringUtil.checkBirthday(birthday)){
+    }else if (!SystemService.checkBirthday(birthday)){
       Redirect("/toUserChange/1001")
     }else if(nickname.replaceAll("[^\\x00-\\xff]", "**").length()>20){
       Redirect("/toUserChange/1003")
@@ -83,7 +83,7 @@ class UserChangeApplication @Inject() (oss_client : OSSClientProvider, cache_cli
       Redirect("/toUserChange/1004")
     }else {
       try{
-        val cookie = request.cookies("web_token")
+        val cookie = request.cookies(Systemcontents.WEB_TOKEN)
         cookie match {
           case null =>
             Redirect("/toLogin?url=toUserChange")

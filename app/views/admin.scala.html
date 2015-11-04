@@ -8,12 +8,12 @@
     <meta name="keywords" content="手游,网游,游戏">
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-    <link href="@SystemApplication.STATIC_URL/css/bootstrap.css" rel="stylesheet">
-    <script type="text/javascript" src="@SystemApplication.STATIC_URL/js/jquery-2.1.1.js"></script>
-    <script type="text/javascript" src="@SystemApplication.STATIC_URL/js/bootstrap.js"></script>
-    <link href="@SystemApplication.STATIC_URL/css/5dsy.css" rel="stylesheet">
+    <link href="@Systemcontents.STATIC_URL/css/bootstrap.css" rel="stylesheet">
+    <script type="text/javascript" src="@Systemcontents.STATIC_URL/js/jquery-2.1.1.js"></script>
+    <script type="text/javascript" src="@Systemcontents.STATIC_URL/js/bootstrap.js"></script>
+    <link href="@Systemcontents.STATIC_URL/css/5dsy.css" rel="stylesheet">
     @headopts
-    <link href="@SystemApplication.STATIC_URL/5dsy.icon" rel="shortcut icon">
+    <link href="@Systemcontents.STATIC_URL/5dsy.icon" rel="shortcut icon">
 </head>
 <body>
     @content
@@ -37,7 +37,7 @@
             $(function(){
                   $('.a-box .a2').click(function(){
                         $('.pop-body').show()
-                        $(".pop-img").attr("src","@SystemApplication.STATIC_URL/img/pic6.jpg")
+                        $(".pop-img").attr("src","@Systemcontents.STATIC_URL/img/pic6.jpg")
                   })
                   
                   $('.pop-body').click(function(){

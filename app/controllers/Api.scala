@@ -13,11 +13,14 @@ import play.api.{Configuration, Logger}
 import models.User
 import utils.SystemService
 
-case class UserNameLoginInfo(name: String, passwd: String)
+case class UserNameLoginInfo(name: String, password: String)
 
 case class UserPhoneLoginInfo(phone:String,code:String)
 
 case class ApiSendCodeForm(phone:String,msg:String)
+
+case class ApiRegForm(phone:String,code:String,password:String)
+
 /**
  * Created by handy on 15/10/23.
  * Daumkakao china
@@ -31,7 +34,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
    */
   val user_name_login_form = Form(mapping(
   "name" ->nonEmptyText,
-  "passwd" -> nonEmptyText
+  "password" -> nonEmptyText
   )(UserNameLoginInfo.apply)(UserNameLoginInfo.unapply))
 
   /**
@@ -44,7 +47,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
   )(UserPhoneLoginInfo.apply)(UserPhoneLoginInfo.unapply))
 
   /**
-   * 发送验证码杰克
+   * 发送验证码
    * TODO 需要检查电话号码、msg
    */
   val api_send_code_form  = Form(mapping(
@@ -52,59 +55,121 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
     "msg" -> nonEmptyText
   )(ApiSendCodeForm.apply)(ApiSendCodeForm.unapply))
 
+  val api_reg_form  = Form(mapping(
+    "phone" ->nonEmptyText,
+    "code" -> nonEmptyText,
+    "password" ->nonEmptyText
+  )(ApiRegForm.apply)(ApiRegForm.unapply))
+
   def send_code = Action { implicit request =>
     val data = api_send_code_form.bindFromRequest().get
     val phone:String = data.phone
     val msg = data.msg
     if(!SystemService.checkPhoneNum(phone)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码不符合规则")))
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
     }
-    else if(!Codecs.md5((phone+"5dsy").getBytes()).equals(msg)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证失败")))
+    else if(!Codecs.md5((phone+"hmm").getBytes()).equals(msg)){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE  -> JsString("验证失败")))
     }
     else {
       val code:String = String.valueOf((100000 + Math.random * 900000).toInt)
       sms!SMS(phone,code,SMSType.comm)
       cache_client.set("api"+phone,180,code)
-      Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("发送成功")))
+      Logger.info(s"用户手机号：$phone api发送验证码成功")
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.SEND_SUCCESS)))
     }
 
   }
 
-  def login_phone_num = Action { implicit request =>
-    val data = user_phone_login_form.bindFromRequest().get
-    val phone : String = data.phone
-    val code : String = data.code
+  def reg = Action{ implicit request =>
+    val data = api_reg_form.bindFromRequest().get
+    val phone :String = data.phone.trim
+    val code :String  = data.code.trim
+    val password :String = data.password.trim
     val cacheCode = cache_client.get("api"+phone)
     if(!SystemService.checkPhoneNum(phone)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("电话号码不符合规则")))
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
     }
     else if(cacheCode ==null|| !String.valueOf(cacheCode).equals(code)){
-      Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("验证码错误")))
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
+    }
+    else if(password.length>20){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString("密码长度不能超过20位")))
+    }
+    else {
+      User.insert(phone,password,request.remoteAddress) match {
+        case Some(id)=>
+          if(id > 0 ){
+            Logger.info(s"用户手机号：$phone 注册成功")
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.REG_SUCCESS)))
+          }
+          else{
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.REG_FAILED)))
+          }
+        case None =>
+          Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.REG_FAILED)))
+      }
+    }
+  }
+
+  def reset_password = Action{ implicit request =>
+    val data = api_reg_form.bindFromRequest().get
+    val phone :String = data.phone.trim
+    val code :String  = data.code.trim
+    val password :String = data.password.trim
+    val cacheCode = cache_client.get("api"+phone)
+    if(!SystemService.checkPhoneNum(phone)){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
+    }
+    else if(cacheCode ==null|| !String.valueOf(cacheCode).equals(code)){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
+    }
+    else if(password.length>20){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString("密码长度不能超过20位")))
+    }
+    else if(User.reset_password(phone,password)>0){
+      Logger.info(s"用户手机号：$phone 重置密码成功")
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_SUCCESS)))
+    }else{
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_FAILED)))
+    }
+  }
+
+  def login_phone_num = Action { implicit request =>
+    val data = user_phone_login_form.bindFromRequest().get
+    val phone : String = data.phone.trim
+    val code : String = data.code.trim
+    val cacheCode = cache_client.get("api"+phone)
+    if(!SystemService.checkPhoneNum(phone)){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.PHONE_NUM_TYPE_ERROR)))
+    }
+    else if(cacheCode ==null|| !String.valueOf(cacheCode).equals(code)){
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.PHONE_CODE_ERROR)))
     }
     else {
       User.find_by_phone(phone) match {
         //已经存在的用户自动登录
         case Some(userInfo) =>
           userLogin!UserLoginWithoutCache(userInfo.id,request.remoteAddress)
-          Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功")))
-
+          Logger.info(s"用户手机号：$phone 手机验证码形式登录成功")
+          Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
         //未注册的用户自动注册并登陆
         case None =>
           val password = String.valueOf((100000 + Math.random * 900000).toInt)//生产密码
           //注册并返回id
           User.insert(phone,password,request.remoteAddress) match {
             case Some(id)=>
-              if(id >0 ){
+              if(id > 0 ){
                 sms ! SMS(phone,password,SMSType.passwd)//actor发送短信
                 userLogin!UserLoginWithoutCache(id,request.remoteAddress)
-                Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功")))
+                Logger.info(s"用户手机号：$phone 未注册自动注册登陆成功")
+                Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
               }
               else{
-                Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("注册失败!")))
+                Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.REG_FAILED)))
               }
             case None =>
-              Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("注册失败")))
+              Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.REG_FAILED)))
           }
       }
     }
@@ -113,34 +178,37 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
 
   def login_user_name = Action { implicit request =>
     val data = user_name_login_form.bindFromRequest().get
-    val name = data.name
-    val passwd = data.passwd
+    val name = data.name.trim
+    val password = data.password.trim
     val phone = ("^1[3-8][0-9]{9}").r
     val email = ("\\b[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\\b").r
     name match{
       case phone =>
-        User.find_by_phone(phone,passwd) match{
+        User.find_by_phone(name,password) match{
           case Some(user)=>
             userLogin!UserLoginWithoutCache(user.id,request.remoteAddress)
-            Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功")))
+            Logger.info(s"用户昵称：$name 登陆成功")
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
           case None =>
-            Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户密码错误")))
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
       case email =>
-        User.find_by_email(name,passwd)match{
+        User.find_by_email(name,password)match{
           case Some(user)=>
             userLogin!UserLoginWithoutCache(user.id,request.remoteAddress)
-            Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功")))
+            Logger.info(s"用户昵称：$name 登陆成功")
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
           case None =>
-            Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户密码错误")))
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
       case _ =>
-        User.find_by_nickname(name,passwd)match{
+        User.find_by_nickname(name,password)match{
           case Some(user)=>
             userLogin!UserLoginWithoutCache(user.id,request.remoteAddress)
-            Ok(Json.obj("if" -> JsBoolean(true), "back" -> JsString("登录成功")))
+            Logger.info(s"用户昵称：$name 登陆成功")
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
           case None =>
-            Ok(Json.obj("if" -> JsBoolean(false), "back" -> JsString("用户密码错误")))
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
     }
   }

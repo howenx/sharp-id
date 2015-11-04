@@ -1,7 +1,7 @@
 @(url:String)
 @head ={
-    <link href="@SystemApplication.STATIC_URL/css/reg.css" rel="stylesheet">
-    <link href="@SystemApplication.STATIC_URL/css/prompt.css" rel="stylesheet">
+    <link href="@Systemcontents.STATIC_URL/css/reg.css" rel="stylesheet">
+    <link href="@Systemcontents.STATIC_URL/css/prompt.css" rel="stylesheet">
     <script type="text/javascript" src="assets/js/userReg.js"></script>
      <style>
     	.add-input{
@@ -38,8 +38,8 @@
 <div class="container reg-cont">
     <div class="reg clearfix">
         <div class="topbar clearfix"><!--colose2.png更换-->
-            <a href="/index"><img class="pull-left img1" src="@SystemApplication.STATIC_URL/img/small-logo.png" alt=""></a>
-            <a href="javascript:window.history.go(-1)"><img class="pull-right img2" src="@SystemApplication.STATIC_URL/img/close2.png" alt=""></a>
+            <a href="/index"><img class="pull-left img1" src="@Systemcontents.STATIC_URL/img/small-logo.png" alt=""></a>
+            <a href="javascript:window.history.go(-1)"><img class="pull-right img2" src="@Systemcontents.STATIC_URL/img/close2.png" alt=""></a>
         </div>
         <input type="hidden" id="url" name="url" value="@url">
         <div class="row row-reg">
@@ -55,7 +55,7 @@
             <input class="ipt-r1 ipt-ry col-md-5 col-xs-11" type="number" id="code"  name="code" onkeyup="this.value=this.value.replace(/\D/g,'')" maxlength="6" onfocus="onPhone()">
             <!--<div class="xin col-md-4 col-xs-1">*</div>-->
             <div style="display: none;" class="row-box col-md-4 col-xs-1" id="codeDiv">
-               <img class="img1" src="@SystemApplication.STATIC_URL/img/th.png" alt="" id="codeImg">
+               <img class="img1" src="@Systemcontents.STATIC_URL/img/th.png" alt="" id="codeImg">
             </div>
 	        <div id="errorMsg" class="reg-false" style="display: none;"></div>
         </div>
@@ -70,7 +70,7 @@
 <div class=“prom-box” style="display: none;" id="completeForm">
 	<div class="prom-pop"></div>
 	<div class="prom-main">
-		<img src="@SystemApplication.STATIC_URL/img/p-logo.jpg">
+		<img src="@Systemcontents.STATIC_URL/img/p-logo.jpg">
 		<span class="s1">注册成功</span>
 		<span class="s2">为了您的账户安全，请点击确定完善您的个人信息。</span>
 		<div class="prom-btn clearfix">

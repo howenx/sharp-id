@@ -1,0 +1,26 @@
+@(back:String)
+@head={
+    <link href="Systemcontents.STATIC_URL/css/purchase.css" rel="stylesheet">    
+    <link href="Systemcontents.STATIC_URL/css/success.css" rel="stylesheet">
+	<!--[if lt IE 9]>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+}
+@body={
+<div class="container reg-cont">
+      <div class="reg purchase clearfix">
+            <div class="topbar clearfix">
+                  <a href="/index"><img class="pull-left img1" src="Systemcontents.STATIC_URL/img/small-logo.png" alt=""></a>
+            </div>
+            <div class="main suc-main">
+                  <p>
+                     @back
+                  </p>
+            </div>
+            <a class="pur-btn" href="/index">确定</a>
+      </div>
+</div>
+}
+@admin(head) {
+	@body
+}
