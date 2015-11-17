@@ -121,7 +121,7 @@ class UserChangeApplication @Inject() (oss_client : OSSClientProvider, cache_cli
           }
           else{
             val photoUrl = request.body.file("inputfile").map { picture =>
-              var key = "style" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + picture.filename.replaceFirst("^[^.]*", "")
+              val key = "style" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + picture.filename.replaceFirst("^[^.]*", "")
               oss!OSS(picture.ref,key)
               Logger.debug("/"+key)
               "/"+key

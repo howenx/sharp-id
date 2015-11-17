@@ -21,8 +21,8 @@ class OssActor @Inject() (oss_client : OSSClientProvider,configuration: Configur
 
   override def receive = {
     case oss:OSS =>
-      var is = new FileInputStream(oss.file.file.getPath)
-      var objMetadata = new ObjectMetadata()
+      val is = new FileInputStream(oss.file.file.getPath)
+      val objMetadata = new ObjectMetadata()
       objMetadata.setContentLength(oss.file.file.length())
       objMetadata.setContentType(oss.file.file.getName.replaceFirst("^[^.]*", ""))
       val result = oss_client.get.putObject(configuration.getString("oss.bucket").getOrElse(""), oss.key, is, objMetadata)
