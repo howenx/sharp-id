@@ -1,7 +1,7 @@
 package controllers
 
 import javax.inject._
-import actor.{UserLoginWithoutCache, SMSType, SMS}
+import actor.{SMSType, SMS}
 import akka.actor.ActorRef
 import net.spy.memcached.MemcachedClient
 import play.api.data._
@@ -150,7 +150,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
       User.find_by_phone(phone) match {
         //已经存在的用户自动登录
         case Some(userInfo) =>
-          userLogin!UserLoginWithoutCache(userInfo.id,request.remoteAddress)
+          User.login(userInfo.id,request.remoteAddress)
           Logger.info(s"用户手机号：$phone 手机验证码形式登录成功")
           Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
         //未注册的用户自动注册并登陆
@@ -161,7 +161,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
             case Some(id)=>
               if(id > 0 ){
                 sms ! SMS(phone,password,SMSType.passwd)//actor发送短信
-                userLogin!UserLoginWithoutCache(id,request.remoteAddress)
+                User.login(id,request.remoteAddress)
                 Logger.info(s"用户手机号：$phone 未注册自动注册登陆成功")
                 Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
               }
@@ -186,7 +186,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
       case phone =>
         User.find_by_phone(name,password) match{
           case Some(user)=>
-            userLogin!UserLoginWithoutCache(user.id,request.remoteAddress)
+            User.login(user.id,request.remoteAddress)
             Logger.info(s"用户昵称：$name 登陆成功")
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
           case None =>
@@ -195,7 +195,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
       case email =>
         User.find_by_email(name,password)match{
           case Some(user)=>
-            userLogin!UserLoginWithoutCache(user.id,request.remoteAddress)
+            User.login(user.id,request.remoteAddress)
             Logger.info(s"用户昵称：$name 登陆成功")
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
           case None =>
@@ -204,7 +204,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
       case _ =>
         User.find_by_nickname(name,password)match{
           case Some(user)=>
-            userLogin!UserLoginWithoutCache(user.id,request.remoteAddress)
+            User.login(user.id,request.remoteAddress)
             Logger.info(s"用户昵称：$name 登陆成功")
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
           case None =>
