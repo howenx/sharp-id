@@ -39,8 +39,13 @@ public class Systemcontents extends Controller {
     public static final String EMAIL_ACTIVE_FAILED= "邮箱激活失败";
     public static final String EMAIL_ACTIVE_SUCCESS= "邮箱激活成功";
 
+    public static final String API_RESULT_REFRESH_SUCCESS ="刷新成功";
+    public static final String API_RESULT_REFRESH_FAILED ="刷新失败";
+
     public static final String API_RESULT_BOOLEAN ="result";
     public static final String API_RESULT_MESSAGE ="message";
+    public static final String API_RESULT_TOKEN ="token";
+    public static final String API_RESULT_OVER_TIME ="expired";
 
     public static final String RESULT_BOOLEAN="if";
     public static final String RESULT_MESSAGE ="back";

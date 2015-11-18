@@ -18,6 +18,7 @@ POST    /api/reg                    controllers.Api.reg
 POST    /api/reset_password         controllers.Api.reset_password
 POST    /api/login_phone_num        controllers.Api.login_phone_num
 POST    /api/login_user_name        controllers.Api.login_user_name
+POST    /api/refresh_token          controllers.Api.refresh_token
 
 #reg
 GET     /toReg                      controllers.RegApplication.toReg

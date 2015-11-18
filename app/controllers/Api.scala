@@ -7,7 +7,7 @@ import net.spy.memcached.MemcachedClient
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.Codecs
-import play.api.libs.json.{JsString, JsBoolean, Json}
+import play.api.libs.json.{JsNumber, JsString, JsBoolean, Json}
 import play.api.mvc.{Action, Controller}
 import play.api.{Configuration, Logger}
 import models.User
@@ -188,7 +188,10 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
           case Some(user)=>
             User.login(user.id,request.remoteAddress)
             Logger.info(s"用户昵称：$name 登陆成功")
-            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
+            val token = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
+            cache_client.set(token,60*60*24*7,Json.stringify(Json.obj("id"->JsString(String.valueOf(user.id)),"name"->JsString(user.nickname),"photo"->JsString(user.photo_url))))
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)
+              , Systemcontents.API_RESULT_TOKEN -> JsString(token) , Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60*60*24*7)))
           case None =>
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
@@ -197,7 +200,10 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
           case Some(user)=>
             User.login(user.id,request.remoteAddress)
             Logger.info(s"用户昵称：$name 登陆成功")
-            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
+            val token = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
+            cache_client.set(token,60*60*24*7,Json.stringify(Json.obj("id"->JsString(String.valueOf(user.id)),"name"->JsString(user.nickname),"photo"->JsString(user.photo_url))))
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)
+              , Systemcontents.API_RESULT_TOKEN -> JsString(token) , Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60*60*24*7)))
           case None =>
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
@@ -206,10 +212,32 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
           case Some(user)=>
             User.login(user.id,request.remoteAddress)
             Logger.info(s"用户昵称：$name 登陆成功")
-            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)))
+            val token = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
+            cache_client.set(token,60*60*24*7,Json.stringify(Json.obj("id"->JsNumber(user.id),"name"->JsString(user.nickname),"photo"->JsString(user.photo_url))))
+            Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)
+              , Systemcontents.API_RESULT_TOKEN -> JsString(token) , Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60*60*24*7)))
           case None =>
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
+    }
+  }
+
+  case class RefreshForm (token:String)
+
+  val refresh_form = Form(mapping(
+    "token" ->nonEmptyText
+  )(RefreshForm.apply)(RefreshForm.unapply))
+
+  def refresh_token = Action { implicit request =>
+    val data = refresh_form.bindFromRequest().get
+    val token = data.token.trim
+    if(cache_client.get(token)!=null){
+      val newToken = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
+      cache_client.set(newToken,60*60*24*7,cache_client.get(token))
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.API_RESULT_REFRESH_SUCCESS)
+        , Systemcontents.API_RESULT_TOKEN -> JsString(newToken) , Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60*60*24*7)))
+    }else{
+      Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_REFRESH_FAILED )))
     }
   }
 
