@@ -1,9 +1,11 @@
 package controllers
 
+import java.io.ByteArrayInputStream
 import javax.inject._
 import actor.{SMSType, SMS}
 import akka.actor.ActorRef
 import net.spy.memcached.MemcachedClient
+import org.apache.commons.codec.binary.Base64
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.Codecs
@@ -26,7 +28,7 @@ case class ApiRegForm(phone:String,code:String,password:String)
  * Daumkakao china
  */
 @Singleton
-class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, @Named("userLogin") userLogin:ActorRef,configuration: Configuration) extends Controller {
+class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef,configuration: Configuration) extends Controller {
 
   /**
    *使用昵称和密码登录
@@ -187,7 +189,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
         User.find_by_phone(name,password) match{
           case Some(user)=>
             User.login(user.id,request.remoteAddress)
-            Logger.info(s"用户昵称：$name 登陆成功")
+            Logger.info(s"用户手机号码：$name 登陆成功")
             val token = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token,60*60*24*7,Json.stringify(Json.obj("id"->JsString(String.valueOf(user.id)),"name"->JsString(user.nickname),"photo"->JsString(user.photo_url))))
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)
@@ -199,7 +201,7 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
         User.find_by_email(name,password)match{
           case Some(user)=>
             User.login(user.id,request.remoteAddress)
-            Logger.info(s"用户昵称：$name 登陆成功")
+            Logger.info(s"用户邮件：$name 登陆成功")
             val token = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token,60*60*24*7,Json.stringify(Json.obj("id"->JsString(String.valueOf(user.id)),"name"->JsString(user.nickname),"photo"->JsString(user.photo_url))))
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.LOGIN_SUCCESS)
@@ -232,13 +234,36 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef, 
     val data = refresh_form.bindFromRequest().get
     val token = data.token.trim
     if(cache_client.get(token)!=null){
-      val newToken = Codecs.md5((System.currentTimeMillis+ scala.util.Random.nextString(100)).getBytes())
-      cache_client.set(newToken,60*60*24*7,cache_client.get(token))
+      val newToken = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
+      cache_client.set(newToken,60*60*24*7,cache_client.get(token))//把用户信息换乘新的key
+      cache_client.delete(token)//删除旧的cache信息
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true),  Systemcontents.API_RESULT_MESSAGE ->JsString(Systemcontents.API_RESULT_REFRESH_SUCCESS)
         , Systemcontents.API_RESULT_TOKEN -> JsString(newToken) , Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60*60*24*7)))
     }else{
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_REFRESH_FAILED )))
     }
+  }
+
+
+  case class RealNameForm (realName:String,cardNum:String,cardImgA:String,cardImgB:String)
+
+  val real_name_form = Form(mapping(
+    "realName" ->nonEmptyText,
+    "cardNum" ->nonEmptyText,
+    "cardImgA" ->nonEmptyText,
+    "cardImgB" ->nonEmptyText
+  )(RealNameForm.apply)(RealNameForm.unapply))
+
+  def updateRealName =  Action { implicit request =>
+    val data = real_name_form.bindFromRequest().get
+    if(request.headers.get("id-token")!=null){
+      val id = cache_client.get(request.headers.get("id-token").toString)
+      if(id != null){
+        val isa = new ByteArrayInputStream(Base64.decodeBase64(data.cardImgA.getBytes));
+        val isb = new ByteArrayInputStream(Base64.decodeBase64(data.cardImgB.getBytes));
+      }
+    }
+    Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_REFRESH_FAILED )))
   }
 
 }
