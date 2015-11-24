@@ -258,11 +258,13 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef,@
     "cardImgB" ->nonEmptyText
   )(RealNameForm.apply)(RealNameForm.unapply))
 
-  def updateRealName =  Action { implicit request =>
+  def changeRealName =  Action { implicit request =>
     val data = real_name_form.bindFromRequest().get
+    Logger.debug(data.toString)
     if(request.headers.get("id-token")!=null){
       val id = cache_client.get(request.headers.get("id-token").toString)
       if(id != null){
+        Logger.debug(id.toString)
         val bytea = Base64.decodeBase64(data.cardImgA.getBytes)
         val byteb = Base64.decodeBase64(data.cardImgB.getBytes)
         val isa = new ByteArrayInputStream(bytea)
