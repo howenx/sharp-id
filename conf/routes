@@ -19,7 +19,7 @@ POST    /api/reset_password         controllers.Api.reset_password
 POST    /api/login_phone_num        controllers.Api.login_phone_num
 POST    /api/login_user_name        controllers.Api.login_user_name
 POST    /api/refresh_token          controllers.Api.refresh_token
-POST    /api/change_real_name       controllers.change_real_name
+POST    /api/change_real_name       controllers.Api.change_real_name
 
 #reg
 GET     /toReg                      controllers.RegApplication.toReg
