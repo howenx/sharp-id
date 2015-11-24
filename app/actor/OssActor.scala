@@ -1,6 +1,6 @@
 package actor
 
-import java.io.{File, FileInputStream}
+import java.io.{ByteArrayInputStream, File, FileInputStream}
 import javax.inject.Inject
 
 import akka.actor.Actor
@@ -17,6 +17,8 @@ import play.api.libs.Files.TemporaryFile
 
 case class OSS (file:TemporaryFile,key:String)
 
+case class OSSIS (is:ByteArrayInputStream,key:String,len:Int)
+
 class OssActor @Inject() (oss_client : OSSClientProvider,configuration: Configuration) extends Actor{
 
   override def receive = {
@@ -26,6 +28,13 @@ class OssActor @Inject() (oss_client : OSSClientProvider,configuration: Configur
       objMetadata.setContentLength(oss.file.file.length())
       objMetadata.setContentType(oss.file.file.getName.replaceFirst("^[^.]*", ""))
       val result = oss_client.get.putObject(configuration.getString("oss.bucket").getOrElse(""), oss.key, is, objMetadata)
+      Logger.info(result.getETag)
+
+    case ossis:OSSIS =>
+      val objMetadata = new ObjectMetadata()
+      objMetadata.setContentLength(ossis.len)
+      objMetadata.setContentType("jpg")
+      val result = oss_client.get.putObject(configuration.getString("oss.bucket").getOrElse(""), ossis.key, ossis.is, objMetadata)
       Logger.info(result.getETag)
 
   }

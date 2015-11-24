@@ -2,10 +2,14 @@ package controllers
 
 import java.io.ByteArrayInputStream
 import javax.inject._
-import actor.{SMSType, SMS}
+import actor.{OSSIS, SMSType, SMS}
 import akka.actor.ActorRef
+import com.fasterxml.jackson.databind.JsonNode
+import controllers.Systemcontents
 import net.spy.memcached.MemcachedClient
 import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.Codecs
@@ -28,7 +32,7 @@ case class ApiRegForm(phone:String,code:String,password:String)
  * Daumkakao china
  */
 @Singleton
-class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef,configuration: Configuration) extends Controller {
+class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef,@Named("oss") oss:ActorRef,configuration: Configuration) extends Controller {
 
   /**
    *使用昵称和密码登录
@@ -259,11 +263,23 @@ class Api @Inject() (cache_client: MemcachedClient, @Named("sms") sms:ActorRef,c
     if(request.headers.get("id-token")!=null){
       val id = cache_client.get(request.headers.get("id-token").toString)
       if(id != null){
-        val isa = new ByteArrayInputStream(Base64.decodeBase64(data.cardImgA.getBytes));
-        val isb = new ByteArrayInputStream(Base64.decodeBase64(data.cardImgB.getBytes));
+        val bytea = Base64.decodeBase64(data.cardImgA.getBytes)
+        val byteb = Base64.decodeBase64(data.cardImgB.getBytes)
+        val isa = new ByteArrayInputStream(bytea)
+        val isb = new ByteArrayInputStream(byteb)
+        val keya = "style" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + "jpg"
+        val keyb = "style" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + "jpg"
+        val json = play.libs.Json.newObject()
+        json.put("cardImgA","/"+keya)
+        json.put("cardImgB","/"+keyb)
+        oss!OSSIS(isa,keya,bytea.length)
+        oss!OSSIS(isb,keyb,byteb.length)
+        if(User.changeRealName(String.valueOf(id).toLong,data.cardNum,json,data.realName)>0){
+          Ok(Json.obj(Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_SUCCESS),"code"->Systemcontents.API_RESULT_SUCCESS_CODE))
+        }
       }
     }
-    Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_REFRESH_FAILED )))
+    Ok(Json.obj(Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_FAILED),"code"->Systemcontents.API_RESULT_FAILED_CODE))
   }
 
 }

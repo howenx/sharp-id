@@ -5,9 +5,13 @@ import java.text.SimpleDateFormat
 import anorm.SqlParser._
 import anorm.~
 import anorm.SQL
+import com.fasterxml.jackson.databind.JsonNode
 import org.joda.time.DateTime
 import play.api.db.DB
 import play.api.Play.current
+import play.libs.Json
+
+import scala.util.parsing.json.JSONObject
 
 case class User (id: Long, nickname: String, gender: String, photo_url: String)
 
@@ -146,7 +150,13 @@ object User {
 
   def active(id:Long):Int = {
     DB.withConnection() { implicit conn =>
-      SQL(""" update "ID" set "active_YN"={active} where where user_id={user_id}""").on("active"->"Y","user_id"->id).executeUpdate()
+      SQL(""" update "ID" set "active_YN"={active}  where user_id={user_id}""").on("active"->"Y","user_id"->id).executeUpdate()
+    }
+  }
+
+  def changeRealName(id:Long,cardNum:String,cardImg : JsonNode,realName:String):Int = {
+    DB.withConnection() { implicit conn =>
+      SQL(""" update "ID" set real_name={realName},card_num={cardNum},card_img={cardImg}::json where user_id={user_id} """).on("realName" -> realName,"cardNum"->cardNum,"cardImg"->Json.stringify(cardImg),"user_id"->id).executeUpdate()
     }
   }
 
