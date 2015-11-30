@@ -21,6 +21,12 @@ POST    /api/login_user_name        controllers.Api.login_user_name
 POST    /api/refresh_token          controllers.Api.refresh_token
 POST    /api/change_real_name       controllers.Api.change_real_name
 
+#address
+POST    /api/address/update         controllers.Api.update_address(handle:Integer ?= 1)
+POST    /api/address/del            controllers.Api.update_address(handle:Integer ?= 2)
+GET     /api/address/list           controllers.Api.all_address
+POST    /api/address/add						controllers.Api.insert_address
+
 #reg
 GET     /toReg                      controllers.RegApplication.toReg
 POST    /regSendCode                controllers.RegApplication.sendCode

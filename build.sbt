@@ -14,15 +14,20 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   specs2 % Test,
-  "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "com.aliyun.oss" % "aliyun-sdk-oss" % "2.0.1",
   "com.typesafe.play" %% "anorm" % "2.5.0",
   "com.typesafe.play" % "play-mailer_2.11" % "2.4.0",
   "com.github.mumoshu" %% "play2-memcached-play24" % "0.7.0"
 
 )
-
+libraryDependencies += "com.fasterxml.jackson.core" % "jackson-core" % "2.6.3"
+libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.3"
+libraryDependencies += "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.3"
+libraryDependencies += "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.6.3"
+libraryDependencies += "org.postgresql" % "postgresql" % "9.4-1206-jdbc41"
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
 
 // Play provides two styles of routers, one expects its actions to be injected, the
 // other, legacy style, accesses its actions statically.
