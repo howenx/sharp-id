@@ -19,18 +19,21 @@ POST    /api/reset_password         controllers.Api.reset_password
 POST    /api/login_phone_num        controllers.Api.login_phone_num
 POST    /api/login_user_name        controllers.Api.login_user_name
 POST    /api/refresh_token          controllers.Api.refresh_token
-POST    /api/change_real_name       controllers.Api.change_real_name
 
-#address
-POST    /api/address/update         controllers.Api.update_address(handle:Integer ?= 1)
-POST    /api/address/del            controllers.Api.update_address(handle:Integer ?= 2)
-GET     /api/address/list           controllers.Api.all_address
-POST    /api/address/add						controllers.Api.insert_address
+
+#UserInfo
+POST    /api/address/update         controllers.ApiUserInfo.update_address(handle:Integer ?= 1)
+POST    /api/address/del            controllers.ApiUserInfo.update_address(handle:Integer ?= 2)
+GET     /api/address/list           controllers.ApiUserInfo.all_address
+POST    /api/address/add						controllers.ApiUserInfo.insert_address
+POST    /api/user/verify            controllers.ApiUserInfo.change_real_name
+GET     /api/user/get/info          controllers.ApiUserInfo.select_user_info
+POST    /api/user/update            controllers.ApiUserInfo.update_user_info
 
 #reg
 GET     /toReg                      controllers.RegApplication.toReg
 POST    /regSendCode                controllers.RegApplication.sendCode
-GET     /getImageCodes/:id    		controllers.RegApplication.getImageCodes(id:Integer)
+GET     /getImageCodes/:id    		  controllers.RegApplication.getImageCodes(id:Integer)
 POST    /regSubmit                  controllers.RegApplication.regSubmit
 
 #login
