@@ -11,25 +11,26 @@ import play.libs.Json
   * 用户详细信息,以及用户收货地址增删改查
   * Created by howen on 15/11/30.
   */
-case class Address(addId: Option[Long], tel: Option[String], name: Option[String], deliveryCity: Option[String], deliveryDetail: Option[String], userId: Option[Long], orDefault: Option[Boolean])
+case class Address(addId: Option[Long], tel: Option[String], name: Option[String], deliveryCity: Option[String], deliveryDetail: Option[String], userId: Option[Long], orDefault: Option[Boolean], idCardNum: Option[String], orDestroy: Option[Boolean])
 
 case class UserDetail(userId: Option[Long], nickname: Option[String], phoneNum: Option[String], birthday: Option[String], activeYn: Option[String], realYN: Option[String], gender: Option[String], photoUrl: Option[String], status: Option[String])
 
 object UserInfo {
 
-  val address = {
+  val addressMapping = {
     get[Long]("add_id") ~
       get[String]("tel") ~
       get[String]("name") ~
       get[String]("delivery_city") ~
       get[String]("delivery_detail") ~
       get[Long]("user_id") ~
-      get[Boolean]("or_default") map {
-      case add_id ~ tel ~ name ~ delivery_city ~ delivery_detail ~ user_id ~ or_default => Address(Some(add_id), Some(tel), Some(name), Some(delivery_city), Some(delivery_detail), Some(user_id), Some(or_default))
+      get[Boolean]("or_default") ~
+      get[String]("id_card_num") map {
+      case add_id ~ tel ~ name ~ delivery_city ~ delivery_detail ~ user_id ~ or_default ~ id_card_num  => Address(Some(add_id), Some(tel), Some(name), Some(delivery_city), Some(delivery_detail), Some(user_id), Some(or_default), Some(id_card_num), Some(true))
     }
   }
 
-  val userInfoDetail = {
+  val userInfoDetailMapping = {
     get[Long]("user_id") ~
       get[String]("nickname") ~
       get[String]("gender") ~
@@ -49,25 +50,74 @@ object UserInfo {
     }
   }
 
-  def allAddress(): List[Address] = {
+  def allAddress(address: Address): List[Address] = {
+    var setString: String = "1 = 1"
+    var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq()
+    if (address.orDefault.isDefined) {
+      setString += """and or_default = {orDefault}"""
+      params = params :+ NamedParameter("orDefault", address.orDefault.get)
+    }
+    if (address.userId.isDefined) {
+      setString += """and user_id = {userId}"""
+      params = params :+ NamedParameter("userId", address.userId.get)
+    }
     DB.withConnection() { implicit conn =>
-      SQL( """select i.add_id,i.tel,i."name",i.delivery_city,i.delivery_detail,i.user_id,i.or_default from id_address i WHERE i.or_destroy=false """).as(address.*)
+      SQL( """select i.add_id,i.tel,i."name",(i.delivery_city->>'province') || (i.delivery_city->>'city')||(i.delivery_city->>'area') as delivery_city,i.delivery_detail,i.user_id,i.or_default,i.id_card_num from id_address i WHERE """+ setString+ """ and i.or_destroy=false """).on(params: _*).as(addressMapping.*)
     }
   }
 
   def updateAddress(address: Address): Int = {
-    DB.withConnection() { implicit conn =>
-      val params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
-        , "deliveryCity" -> address.deliveryCity.get, "deliveryDetail" -> address.deliveryDetail.get, "userId" -> address.userId.get
-        , "orDefault" -> address.orDefault.get, "addId" -> address.addId.get
-      )
-      SQL( """ update id_address set tel={tel} ,"name" = {name}, delivery_city={deliveryCity} , delivery_detail={deliveryDetail}, user_id={userId} , or_default={orDefault},update_at=CURRENT_TIMESTAMP(0) where add_id={addId}""").on(params: _*).executeUpdate()
-    }
-  }
 
-  def deleteAddress(address: Address): Int = {
-    DB.withConnection() { implicit conn =>
-      SQL( """ update id_address set or_destroy=true, destroy_at=CURRENT_TIMESTAMP(0) where add_id={addId}""").on("addId" -> address.addId).executeUpdate()
+    var setString: String = "update_at = CURRENT_TIMESTAMP(0)"
+    var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq(
+      NamedParameter("addId", address.addId.get),
+      NamedParameter("userId", address.userId.get)
+    )
+    if (address.tel.isDefined) {
+      setString += """, "tel" = {tel}"""
+      params = params :+ NamedParameter("tel", address.tel.get)
+    }
+    if (address.name.isDefined) {
+      setString += ""","name" = {name}"""
+      params = params :+ NamedParameter("name", address.name.get)
+    }
+    if (address.deliveryCity.isDefined) {
+      setString += """,delivery_city = {deliveryCity}::jsonb"""
+      params = params :+ NamedParameter("deliveryCity", address.deliveryCity.get)
+    }
+    if (address.deliveryDetail.isDefined) {
+      setString += """,delivery_detail = {deliveryDetail}"""
+      params = params :+ NamedParameter("deliveryDetail", address.deliveryDetail.get)
+    }
+    if (address.userId.isDefined) {
+      setString += """,user_id = {userId}"""
+      params = params :+ NamedParameter("userId", address.userId.get)
+    }
+    if (address.orDefault.isDefined) {
+      setString += """,or_default = {orDefault}"""
+      params = params :+ NamedParameter("orDefault", address.orDefault.get)
+    }
+    if (address.idCardNum.isDefined) {
+      setString += ""","id_card_num" = {idCardNum}"""
+      params = params :+ NamedParameter("idCardNum", address.idCardNum.get)
+    }
+    if (address.orDestroy.isDefined) {
+      setString += """,or_destroy = {orDestroy}"""
+      setString += """, destroy_at= CURRENT_TIMESTAMP(0)"""
+      params = params :+ NamedParameter("orDestroy", address.orDestroy.get)
+    }
+    if(address.userId.isDefined){
+      setString +="""WHERE 1=1 and user_id={userId}"""
+      setString +="""and or_destroy=false"""
+      params = params :+ NamedParameter("userId", address.userId.get)
+    }
+    if(address.addId.isDefined){
+      setString +="""and add_id={addId}"""
+      params = params :+ NamedParameter("addId", address.addId.get)
+    }
+
+    DB.withConnection { implicit c =>
+      SQL( """UPDATE id_address SET """ + setString).on(params: _*).executeUpdate()
     }
   }
 
@@ -75,58 +125,59 @@ object UserInfo {
     DB.withConnection() { implicit conn =>
       val params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
         , "deliveryCity" -> address.deliveryCity.get, "deliveryDetail" -> address.deliveryDetail.get, "userId" -> address.userId.get
+        , "idCardNum" -> address.idCardNum.get
       )
       SQL(
-        """ insert into  id_address(user_id,tel, "name",delivery_city,delivery_detail,create_at)values({userId},{tel},{name},{deliveryCity},{deliveryDetail},CURRENT_TIMESTAMP(0) )""").on(params: _*).executeInsert()
+        """ insert into  id_address(user_id,tel, "name",delivery_city,delivery_detail,id_card_num,create_at)values({userId},{tel},{name},{deliveryCity}::jsonb,{deliveryDetail},{idCardNum},CURRENT_TIMESTAMP(0) )""").on(params: _*).executeInsert()
     }
   }
 
   def findByUserId(id: Long): Option[UserDetail] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url,email,to_char(birthday,'YYYY-MM-DD') birthday,phone_num,"active_YN","real_YN",status from "ID" where user_id = {user_id}""").on("user_id" -> id).as(userInfoDetail.*).headOption
+      SQL( """select user_id, nickname, gender, photo_url,email,to_char(birthday,'YYYY-MM-DD') birthday,phone_num,"active_YN","real_YN",status from "ID" where user_id = {user_id}""").on("user_id" -> id).as(userInfoDetailMapping.*).headOption
     }
   }
 
-  def updateUserDetail(userDetail: UserDetail) : Int = {
+  def updateUserDetail(userDetail: UserDetail): Int = {
     var setString: String = "alter_dt = CURRENT_TIMESTAMP(0)"
-    var params: collection.mutable.Seq[NamedParameter] =collection.mutable.Seq(
+    var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq(
       NamedParameter("userId", userDetail.userId.get)
     )
     if (userDetail.activeYn.isDefined) {
       setString += """, "active_YN" = {activeYn}"""
       params = params :+ NamedParameter("activeYn", userDetail.activeYn.get)
     }
-    if(userDetail.birthday.isDefined){
+    if (userDetail.birthday.isDefined) {
       setString += """,birthday = to_timestamp({birthday},'YYYY-MM-DD')"""
       params = params :+ NamedParameter("birthday", userDetail.birthday.get)
     }
-    if(userDetail.gender.isDefined){
+    if (userDetail.gender.isDefined) {
       setString += """,gender = {gender}"""
       params = params :+ NamedParameter("gender", userDetail.gender.get)
     }
-    if(userDetail.nickname.isDefined){
+    if (userDetail.nickname.isDefined) {
       setString += """,nickname = {nickname}"""
       params = params :+ NamedParameter("nickname", userDetail.nickname.get)
     }
-    if(userDetail.phoneNum.isDefined){
+    if (userDetail.phoneNum.isDefined) {
       setString += """,phone_num = {phoneNum}"""
       params = params :+ NamedParameter("phoneNum", userDetail.phoneNum.get)
     }
-    if(userDetail.photoUrl.isDefined){
+    if (userDetail.photoUrl.isDefined) {
       setString += """,photo_url = {photoUrl}"""
       params = params :+ NamedParameter("photoUrl", userDetail.photoUrl.get)
     }
-    if(userDetail.realYN.isDefined){
+    if (userDetail.realYN.isDefined) {
       setString += ""","real_YN" = {realYN}"""
       params = params :+ NamedParameter("realYN", userDetail.realYN.get)
     }
-    if(userDetail.status.isDefined){
+    if (userDetail.status.isDefined) {
       setString += """,status = {status}"""
       params = params :+ NamedParameter("status", userDetail.status.get)
     }
 
     DB.withConnection { implicit c =>
-      SQL("""UPDATE "ID" SET """ + setString + """ WHERE user_id = {userId}""").on(params:_*).executeUpdate()
+      SQL( """UPDATE "ID" SET """ + setString + """ WHERE user_id = {userId}""").on(params: _*).executeUpdate()
     }
   }
 }
