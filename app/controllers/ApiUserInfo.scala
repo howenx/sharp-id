@@ -420,7 +420,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
               "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
                 "photo" -> JsString(configuration.getString("staticUrl").getOrElse("") + user.photoUrl.get),
                 "realYn" -> JsString(user.realYN.get),
-                "phoneNum" -> JsString(user.phoneNum.get)
+                "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get)
               )
             ))
             case None => Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
