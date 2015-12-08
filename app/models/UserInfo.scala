@@ -3,6 +3,7 @@ package models
 import anorm.SqlParser._
 import anorm.{SQL, ~, _}
 import com.fasterxml.jackson.databind.JsonNode
+import play.api.Logger
 import play.api.Play.current
 import play.api.db.DB
 import play.libs.Json
@@ -11,7 +12,7 @@ import play.libs.Json
   * 用户详细信息,以及用户收货地址增删改查
   * Created by howen on 15/11/30.
   */
-case class Address(addId: Option[Long], tel: Option[String], name: Option[String], deliveryCity: Option[String], deliveryDetail: Option[String], userId: Option[Long], orDefault: Option[Boolean], idCardNum: Option[String], orDestroy: Option[Boolean],cityCode:Option[String])
+case class Address(addId: Option[Long], tel: Option[String], name: Option[String], deliveryCity: Option[String], deliveryDetail: Option[String], userId: Option[Long], orDefault: Option[Int], idCardNum: Option[String], orDestroy: Option[Boolean],cityCode:Option[String])
 
 case class UserDetail(userId: Option[Long], nickname: Option[String], phoneNum: Option[String], birthday: Option[String], activeYn: Option[String], realYN: Option[String], gender: Option[String], photoUrl: Option[String], status: Option[String])
 
@@ -27,7 +28,7 @@ object UserInfo {
       get[Boolean]("or_default") ~
       get[String]("id_card_num")~
       get[String]("city_code")map {
-      case add_id ~ tel ~ name ~ delivery_city ~ delivery_detail ~ user_id ~ or_default ~ id_card_num ~ city_code => Address(Some(add_id), Some(tel), Some(name), Some(delivery_city), Some(delivery_detail), Some(user_id), Some(or_default), Some(id_card_num), Some(false),Some(city_code))
+      case add_id ~ tel ~ name ~ delivery_city ~ delivery_detail ~ user_id ~ or_default ~ id_card_num ~ city_code => Address(Some(add_id), Some(tel), Some(name), Some(delivery_city), Some(delivery_detail), Some(user_id), Some(if (or_default) 1 else 0), Some(id_card_num), Some(false),Some(city_code))
     }
   }
 
@@ -56,7 +57,7 @@ object UserInfo {
     var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq()
     if (address.orDefault.isDefined) {
       setString += """and or_default = {orDefault}"""
-      params = params :+ NamedParameter("orDefault", address.orDefault.get)
+      params = params :+ NamedParameter("orDefault", if(address.orDefault.get==0)false else true)
     }
     if (address.userId.isDefined) {
       setString += """and user_id = {userId}"""
@@ -94,7 +95,7 @@ object UserInfo {
     }
     if (address.orDefault.isDefined) {
       setString += """,or_default = {orDefault}"""
-      params = params :+ NamedParameter("orDefault", address.orDefault.get)
+      params = params :+ NamedParameter("orDefault", if(address.orDefault.get==0)false else true)
     }
     if (address.idCardNum.isDefined) {
       setString += """,id_card_num = {idCardNum}"""
@@ -124,10 +125,16 @@ object UserInfo {
 
   def insertAddress(address: Address): Option[Long] = {
     DB.withConnection() { implicit conn =>
-      val params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
+      var params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
         , "deliveryCity" -> address.deliveryCity.get, "deliveryDetail" -> address.deliveryDetail.get, "userId" -> address.userId.get
-        , "idCardNum" -> address.idCardNum.get,"orDefault" -> address.orDefault.get
+        , "idCardNum" -> address.idCardNum.get
       )
+      if (address.orDefault.isDefined) {
+        if (address.orDefault.get==0){
+          params = params :+ NamedParameter("orDefault", false)
+        }else params = params :+ NamedParameter("orDefault", true)
+      }
+
       SQL(
         """ insert into  id_address(user_id,tel, "name",delivery_city,delivery_detail,id_card_num,or_default,create_at)values({userId},{tel},{name},{deliveryCity}::jsonb,{deliveryDetail},{idCardNum},{orDefault},CURRENT_TIMESTAMP(0) )""").on(params: _*).executeInsert()
     }
