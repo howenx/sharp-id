@@ -59,8 +59,6 @@ class SMSActor @Inject() (ws: WSClient, configuration: Configuration,cache_clien
           Logger.info(response.body)
         }       }
 
-
-
   }
 }
 

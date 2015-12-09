@@ -5,7 +5,7 @@ import javax.inject.{Inject, Named}
 
 import actor.OSSIS
 import akka.actor.ActorRef
-import models.{Address, UserDetail, UserInfo}
+import models._
 import net.spy.memcached.MemcachedClient
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
@@ -413,13 +413,15 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
         val id_token = cache_client.get(request.headers.get("id-token").get)
         val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
         if (user_id.isDefined) {
+          //查询当前用户下所有未使用的优惠券数量
+          val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(null,user_id.get.toLong,null,null,null,null,"N",null,null,null,null))
           UserInfo.findByUserId(user_id.get.toLong) match {
             case Some(user) => Ok(Json.obj(
               "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
               "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
                 "photo" -> JsString(configuration.getString("staticUrl").getOrElse("") + user.photoUrl.get),
                 "realYn" -> JsString(user.realYN.get),
-                "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get)
+                "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get),"couponsCount"->JsNumber(couponVo.size)
               )
             ))
             case None => Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
@@ -454,6 +456,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                 val isa = new ByteArrayInputStream(bytea)
                 val keya = "users/photo" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
                 oss ! OSSIS(isa, keya, bytea.length)
+
                 userDetail = new UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some("/" + keya), data.status)
               }
               if (UserInfo.updateUserDetail(userDetail) >= 0)

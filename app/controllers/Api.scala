@@ -2,9 +2,9 @@ package controllers
 
 import javax.inject._
 
-import actor.{SMS, SMSType}
+import actor.{CouponsActor, SMS, SMSType}
 import akka.actor.ActorRef
-import models.User
+import models.{CouponsVo, User}
 import net.spy.memcached.MemcachedClient
 import play.api.data.Forms._
 import play.api.data._
@@ -27,7 +27,7 @@ case class ApiRegForm(phone: String, code: String, password: String)
   * Daumkakao china
   */
 @Singleton
-class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef, configuration: Configuration) extends Controller {
+class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef,@Named("coupons") couponsActor: ActorRef, configuration: Configuration) extends Controller {
 
   /**
     * 使用昵称和密码登录
@@ -191,6 +191,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
             Logger.info(s"用户手机号码：$name 登陆成功")
             val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
+            //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
+            couponsActor ! CouponsVo(null,user.id,null,null,null,null,"S",null,null,null,null)
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)
               , Systemcontents.API_RESULT_TOKEN -> JsString(token), Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7)))
           case None =>
