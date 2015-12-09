@@ -6,11 +6,12 @@ import org.apache.commons.lang3.StringUtils
 
 
 /**
+  *
  * Created by china_005 on 15/10/26.
  */
 object SystemService {
   def checkPhoneNum (phoneNum:String) : Boolean= {
-    val p = ("^1[3-8][0-9]{9}").r
+    val p = "^1[3-8][0-9]{9}".r
     if(StringUtils.isEmpty(phoneNum)){
        false
     }
@@ -19,7 +20,7 @@ object SystemService {
     }
     else{
       phoneNum match{
-        case p =>
+        case p() =>
           true
         case _ =>
           false
@@ -34,7 +35,7 @@ object SystemService {
     }
     else{
       email match{
-        case p =>
+        case p() =>
           true
         case _ =>
           false
@@ -49,7 +50,7 @@ object SystemService {
     }
     else{
       birthday match{
-        case p =>
+        case p() =>
           true
         case _ =>
           false

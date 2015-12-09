@@ -1,11 +1,9 @@
 package models
 
-import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
 import anorm.SqlParser._
 import anorm.{SQL, ~}
-import org.joda.time.DateTime
 import play.api.Play.current
 import play.api.db.DB
 
@@ -46,55 +44,55 @@ object User {
 
   def find(): List[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" """).as(user *)
+      SQL( """select user_id, nickname, gender, photo_url from "ID" """).as(user.*)
     }
   }
 
   def find_by_id(id: Long): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where user_id = {user_id}""").on("user_id" -> id).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where user_id = {user_id}""").on("user_id" -> id).as(user.*).headOption
     }
   }
 
   def find_by_id_more(id: Long): Option[UserMore] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url,email,to_char(birthday,'YYYY-MM-DD'),phone_num,"active_YN" from "ID" where user_id = {user_id}""").on("user_id" -> id).as(userMore *).headOption
+      SQL( """select user_id, nickname, gender, photo_url,email,to_char(birthday,'YYYY-MM-DD'),phone_num,"active_YN" from "ID" where user_id = {user_id}""").on("user_id" -> id).as(userMore.*).headOption
     }
   }
 
   def find_by_nickname(nickname: String): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where nickname = {nickname} """).on("nickname" -> nickname).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where nickname = {nickname} """).on("nickname" -> nickname).as(user.*).headOption
     }
   }
 
   def find_by_nickname(nickname: String, passwd: String): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where nickname = {nickname} and passwd = user_passwd(user_id,{passwd}) """).on("nickname" -> nickname, "passwd" -> passwd).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where nickname = {nickname} and passwd = user_passwd(user_id,{passwd}) """).on("nickname" -> nickname, "passwd" -> passwd).as(user.*).headOption
     }
   }
 
   def find_by_email(email: String): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where email = {email}  """).on("email" -> email).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where email = {email}  """).on("email" -> email).as(user.*).headOption
     }
   }
 
   def find_by_email(email: String, passwd: String): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where email = {email} and passwd = user_passwd(user_id,{passwd}) """).on("email" -> email, "passwd" -> passwd).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where email = {email} and passwd = user_passwd(user_id,{passwd}) """).on("email" -> email, "passwd" -> passwd).as(user.*).headOption
     }
   }
 
   def find_by_phone(phone: String): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where phone_num = {phone_num}""").on("phone_num" -> phone).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where phone_num = {phone_num}""").on("phone_num" -> phone).as(user.*).headOption
     }
   }
 
   def find_by_phone(phone: String, passwd: String): Option[User] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select user_id, nickname, gender, photo_url from "ID" where phone_num = {phone_num} and passwd = user_passwd(user_id,{passwd}) """).on("phone_num" -> phone, "passwd" -> passwd).as(user *).headOption
+      SQL( """select user_id, nickname, gender, photo_url from "ID" where phone_num = {phone_num} and passwd = user_passwd(user_id,{passwd}) """).on("phone_num" -> phone, "passwd" -> passwd).as(user.*).headOption
     }
   }
 
@@ -118,8 +116,8 @@ object User {
 
   /**
     * 简单注册
-    * @param phone
-    * @param passwd
+    * @param phone phone
+    * @param passwd passwd
     * @return
     */
   def insert(phone: String, passwd: String, ip: String): Option[Long] = {
@@ -129,10 +127,9 @@ object User {
     }
   }
 
-  def login(id: Long, ip: String) = {
+  def login(id: Long, ip: String):Int = {
     DB.withConnection() { implicit conn =>
-      SQL( """ update "ID" set lastlogin_dt = {lastlogin_dt} , lastlogin_ip = cidr({lastlogin_ip}) where user_id={user_id} """)
-        .on("lastlogin_dt" -> new Timestamp((new DateTime()).withMillisOfSecond(0).getMillis), "lastlogin_ip" -> ip, "user_id" -> id).executeUpdate()
+      SQL( """ update "ID" set lastlogin_dt = CURRENT_TIMESTAMP(0) , lastlogin_ip = cidr({lastlogin_ip}) where user_id={user_id} """).on("lastlogin_ip" -> ip, "user_id" -> id).executeUpdate()
     }
   }
 

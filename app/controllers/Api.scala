@@ -1,9 +1,8 @@
 package controllers
 
-import java.security.Timestamp
 import javax.inject._
 
-import actor.{CouponsActor, SMS, SMSType}
+import actor.{SMS, SMSType}
 import akka.actor.ActorRef
 import models.{CouponsVo, User}
 import net.spy.memcached.MemcachedClient
@@ -182,10 +181,10 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
     val data = user_name_login_form.bindFromRequest().get
     val name = data.name.trim
     val password = data.password.trim
-    val phone = ("^1[3-8][0-9]{9}").r
-    val email = ("\\b[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\\b").r
+    val phone_regx = "^1[3-8][0-9]{9}".r
+    val email_regx = "\\b[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\\b".r
     name match {
-      case phone =>
+      case phone_regx() =>
         User.find_by_phone(name, password) match {
           case Some(user) =>
             User.login(user.id, request.remoteAddress)
@@ -199,7 +198,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
           case None =>
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
         }
-      case email =>
+      case email_regx() =>
         User.find_by_email(name, password) match {
           case Some(user) =>
             User.login(user.id, request.remoteAddress)

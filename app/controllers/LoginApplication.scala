@@ -132,12 +132,12 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
       Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
     }
     else {
-      val timeNow = new SimpleDateFormat("YYYY-MM-dd hh:mm:ss").format(new Timestamp((new DateTime()).withMillisOfSecond(0).getMillis))
+      val timeNow = new SimpleDateFormat("YYYY-MM-dd hh:mm:ss").format(new Timestamp(new DateTime().withMillisOfSecond(0).getMillis))
       val securityStr = name + timeNow + "webLogin"
-      val p = ("^1[3-8][0-9]{9}").r
-      val email = ("\\b[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\\b").r
+      val p = "^1[3-8][0-9]{9}".r
+      val email = "\\b[a-zA-Z0-9.!#$%&\'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\\b".r
       name match {
-        case p =>
+        case p() =>
           User.find_by_phone(name,passwd) match {
             case Some(userInfo) =>
 //              userLogin ! UserLoginSetCache(userInfo, request.remoteAddress, securityStr)
@@ -147,7 +147,7 @@ class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: 
             case None =>
               Ok(Json.obj(Systemcontents.RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.RESULT_MESSAGE -> JsString(Systemcontents.USER_PASSWORD_ERROR)))
           }
-        case email =>
+        case email() =>
           User.find_by_email(name,passwd)match{
             case Some(userInfo)=>
 //              userLogin!UserLoginSetCache(userInfo,request.remoteAddress,securityStr)
