@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import anorm.SqlParser._
 import anorm._
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.joda.time.DateTime
 import play.api.db.DB
 import play.api.Play.current
 
@@ -12,19 +13,7 @@ import play.api.Play.current
   * 用户优惠券
   * Created by howen on 15/12/9.
   */
-case class CouponsVo(
-                      coupId: String,
-                      @JsonIgnore userId: Long,
-                      @JsonIgnore cateId: Long,
-                      denomination: BigDecimal,
-                      startAt: Timestamp,
-                      endAt: Timestamp,
-                      state: String,
-                      @JsonIgnore orderId: Long,
-                      @JsonIgnore useAt: Timestamp,
-                      limitQuota: BigDecimal,
-                      couponsCount:Int
-                    )
+case class CouponsVo(coupId: String, @JsonIgnore userId: Long,@JsonIgnore cateId: Long,denomination: BigDecimal,startAt: Timestamp,endAt: Timestamp,state: String,@JsonIgnore orderId: Long,@JsonIgnore useAt: Timestamp, limitQuota: BigDecimal, couponsCount:Int)
 
 
 object Coupons {
@@ -34,15 +23,15 @@ object Coupons {
       get[Long]("user_id") ~
       get[Long]("cate_id") ~
       get[BigDecimal]("denomination") ~
-      get[Timestamp]("start_at") ~
-      get[Timestamp]("end_at") ~
+      get[DateTime]("start_at") ~
+      get[DateTime]("end_at") ~
       get[String]("state") ~
       get[Long]("order_id") ~
-      get[Timestamp]("use_at")~
+      get[DateTime]("use_at")~
       get[BigDecimal] ("limit_quota")~
       get[Int] ("coupons_count") map {
       case coup_id ~ user_id ~ cate_id ~ denomination ~ start_at ~ end_at ~ state ~ order_id ~ use_at~ limit_quota~coupons_count=>
-        CouponsVo(coup_id, user_id, cate_id, denomination, start_at, end_at, state, order_id, use_at,limit_quota,coupons_count)
+        CouponsVo(coup_id.toString, user_id.toLong, cate_id.toLong, BigDecimal.apply(denomination.toBigInt()), Timestamp.valueOf(start_at.toString), Timestamp.valueOf(end_at.toString), state, order_id.toLong, Timestamp.valueOf(use_at.toString),BigDecimal.apply(limit_quota.toBigInt()),coupons_count.toInt)
     }
   }
 

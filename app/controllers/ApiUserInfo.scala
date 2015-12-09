@@ -15,6 +15,8 @@ import play.api.libs.json._
 import play.api.mvc.{Action, BodyParsers, Controller}
 import play.api.{Configuration, Logger}
 
+import scala.language.postfixOps
+
 /**
   * 用户信息返回和收货地址CURD
   * Created by howen on 15/11/30.
@@ -414,7 +416,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
         val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
         if (user_id.isDefined) {
           //查询当前用户下所有未使用的优惠券数量
-          val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(null,user_id.get.toLong,null,null,null,null,"N",null,null,null,null))
+          val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(null.asInstanceOf[String],user_id.get.toLong,null.asInstanceOf[Long],null.asInstanceOf[BigDecimal],null.asInstanceOf[java.sql.Timestamp],null.asInstanceOf[java.sql.Timestamp],"N",null.asInstanceOf[Long],null.asInstanceOf[java.sql.Timestamp],null.asInstanceOf[BigDecimal],null.asInstanceOf[Int]))
           UserInfo.findByUserId(user_id.get.toLong) match {
             case Some(user) => Ok(Json.obj(
               "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),

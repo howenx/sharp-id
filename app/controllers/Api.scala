@@ -1,5 +1,6 @@
 package controllers
 
+import java.security.Timestamp
 import javax.inject._
 
 import actor.{CouponsActor, SMS, SMSType}
@@ -192,7 +193,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
             val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
             //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
-            couponsActor ! CouponsVo(null,user.id,null,null,null,null,"S",null,null,null,null)
+            couponsActor ! CouponsVo(null.asInstanceOf[String],user.id,null.asInstanceOf[Long],null.asInstanceOf[BigDecimal],null.asInstanceOf[java.sql.Timestamp],null.asInstanceOf[java.sql.Timestamp],"S",null.asInstanceOf[Long],null.asInstanceOf[java.sql.Timestamp],null.asInstanceOf[BigDecimal],null.asInstanceOf[Int])
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)
               , Systemcontents.API_RESULT_TOKEN -> JsString(token), Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7)))
           case None =>
