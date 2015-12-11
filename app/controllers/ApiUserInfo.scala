@@ -38,7 +38,7 @@ object ChessPiece extends Enumeration {
   def convert(value: Value) = value.asInstanceOf[ChessPieceVal]
 }
 
-class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef, configuration: Configuration) extends Controller {
+class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef,@Named("coupons") couponsActor: ActorRef, configuration: Configuration) extends Controller {
 
 
   case class RealNameForm(realName: Option[String], cardNum: Option[String], cardImgA: Option[String], cardImgB: Option[String])
@@ -415,8 +415,9 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
         val id_token = cache_client.get(request.headers.get("id-token").get)
         val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
         if (user_id.isDefined) {
+          couponsActor ! CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("S"),None,None,None,None)
           //查询当前用户下所有未使用的优惠券数量
-          val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(null.asInstanceOf[String],user_id.get.toLong,null.asInstanceOf[Long],null.asInstanceOf[BigDecimal],null.asInstanceOf[java.sql.Timestamp],null.asInstanceOf[java.sql.Timestamp],"N",null.asInstanceOf[Long],null.asInstanceOf[java.sql.Timestamp],null.asInstanceOf[BigDecimal],null.asInstanceOf[Int]))
+          val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("N"),None,None,None,None))
           UserInfo.findByUserId(user_id.get.toLong) match {
             case Some(user) => Ok(Json.obj(
               "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
