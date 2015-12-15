@@ -173,7 +173,8 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     * @return
     */
   def all_address = Action { request =>
-    val cache = collection.mutable.Map[String, Any]()
+    play.Logger.error(request.toString())
+    val result = collection.mutable.Map[String, Any]()
     if (request.headers.get("id-token").isDefined) {
       val id_token = cache_client.get(request.headers.get("id-token").get)
       val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
@@ -181,20 +182,20 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
         val addr: Address = new Address(None, None, None, None, None, Some(user_id.get.toLong), None, None, None,None)
         val adds: List[Address] = UserInfo.allAddress(addr)
         if (adds.nonEmpty) {
-          cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
-          cache.put("address", adds)
-          Ok(JsonUtil.toJson(cache))
+          result.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
+          result.put("address", adds)
+          Ok(JsonUtil.toJson(result))
         } else {
-          cache.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
-          Ok(JsonUtil.toJson(cache))
+          result.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
+          Ok(JsonUtil.toJson(result))
         }
       } else {
-        cache.put("message", Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue))
-        Ok(JsonUtil.toJson(cache))
+        result.put("message", Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue))
+        Ok(JsonUtil.toJson(result))
       }
     } else {
-      cache.put("message", JsonUtil.toJson(new Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
-      Ok(JsonUtil.toJson(cache))
+      result.put("message", JsonUtil.toJson(new Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
+      Ok(JsonUtil.toJson(result))
     }
   }
 

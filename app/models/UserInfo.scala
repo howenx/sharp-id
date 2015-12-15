@@ -24,10 +24,10 @@ object UserInfo {
       get[String]("delivery_city") ~
       get[String]("delivery_detail") ~
       get[Long]("user_id") ~
-      get[Boolean]("or_default") ~
+      get[Int]("or_default") ~
       get[String]("id_card_num")~
       get[String]("city_code")map {
-      case add_id ~ tel ~ name ~ delivery_city ~ delivery_detail ~ user_id ~ or_default ~ id_card_num ~ city_code => Address(Some(add_id), Some(tel), Some(name), Some(delivery_city), Some(delivery_detail), Some(user_id), Some(if (or_default) 1 else 0), Some(id_card_num), Some(false),Some(city_code))
+      case add_id ~ tel ~ name ~ delivery_city ~ delivery_detail ~ user_id ~ or_default ~ id_card_num ~ city_code => Address(Some(add_id), Some(tel), Some(name), Some(delivery_city), Some(delivery_detail), Some(user_id), Some(or_default), Some(id_card_num), Some(false),Some(city_code))
     }
   }
 
@@ -63,7 +63,8 @@ object UserInfo {
       params = params :+ NamedParameter("userId", address.userId.get)
     }
     DB.withConnection() { implicit conn =>
-      SQL( """select i.add_id,i.tel,i."name",(i.delivery_city->>'province') ||(' ')|| (i.delivery_city->>'city')||(' ')||(i.delivery_city->>'area') as delivery_city,COALESCE((i.delivery_city->>'city_code'),'none') as city_code,i.delivery_detail,i.user_id,i.or_default,i.id_card_num from id_address i WHERE """+ setString+ """ and i.or_destroy=false """).on(params: _*).as(addressMapping.*)
+      play.Logger.error(SQL( """select i.add_id,i.tel,i."name",(i.delivery_city->>'province') ||(' ')|| (i.delivery_city->>'city')||(' ')||(i.delivery_city->>'area') as delivery_city,COALESCE((i.delivery_city->>'city_code'),'none') as city_code,i.delivery_detail,i.user_id,i.or_default::integer,i.id_card_num from id_address i WHERE """+ setString+ """ and i.or_destroy=false """).on(params: _*).as(addressMapping.*).toString())
+      SQL( """select i.add_id,i.tel,i."name",(i.delivery_city->>'province') ||(' ')|| (i.delivery_city->>'city')||(' ')||(i.delivery_city->>'area') as delivery_city,COALESCE((i.delivery_city->>'city_code'),'none') as city_code,i.delivery_detail,i.user_id,i.or_default::integer,i.id_card_num from id_address i WHERE """+ setString+ """ and i.or_destroy=false """).on(params: _*).as(addressMapping.*)
     }
   }
 
