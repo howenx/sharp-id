@@ -221,7 +221,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
 
               //如果要设置当前新加入的地址为默认地址
               if (data.orDefault.get==1) {
-                val address: Address = new Address(None, None, None, None, None, Some(user_id.get.toLong), Some(1), None, None, None)
+                val address: Address = new Address(None, None, None, None, None, Some(user_id.get.toLong), Some(0), None, None, None)
                 val result = UserInfo.updateAddress(address)
                 if (result >= 0) {
                   val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None)
