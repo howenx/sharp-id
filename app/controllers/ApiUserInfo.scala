@@ -173,7 +173,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     * @return
     */
   def all_address = Action { request =>
-    play.Logger.error(request.toString())
+
     val result = collection.mutable.Map[String, Any]()
     if (request.headers.get("id-token").isDefined) {
       val id_token = cache_client.get(request.headers.get("id-token").get)
@@ -291,7 +291,6 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
   def update_address(handle: Integer) = Action(BodyParsers.parse.json) { request =>
     val data: JsResult[Address] = request.body.validate[Address]
     val cache = collection.mutable.Map[String, Object]()
-    Logger.error(data.toString)
     data.fold(
       errors => {
         cache.put("message", Message(ChessPiece.ERROR.string, ChessPiece.ERROR.pointValue))
@@ -303,7 +302,6 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
           val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
           if (user_id.isDefined) {
             if (handle == 1) {
-              Logger.error(data.toString)
               //更新时候,先看是否已经存在默认地址
               if (data.orDefault.isDefined) {
                 if (data.orDefault.get==1) {
@@ -447,7 +445,6 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
           Ok(Json.obj("message" -> Message(ChessPiece.ERROR.string, ChessPiece.ERROR.pointValue)))
         },
         data => {
-          Logger.error(request.headers.get("id-token").toString)
           if (request.headers.get("id-token").isDefined) {
             val id_token = cache_client.get(request.headers.get("id-token").get)
             val user_id = Json.parse(id_token.toString).\("id").asOpt[String]

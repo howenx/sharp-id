@@ -54,7 +54,7 @@ class SMSActor @Inject() (ws: WSClient, configuration: Configuration,cache_clien
             content = s"重置密码为：$code，请尽快登录修改密码。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
         }
         val send_url = s"http://sms.chanzor.com:8001/sms.aspx?action=send&account=$account&password=$password&mobile=$mobile&content=$content&sendTime="
-        Logger.info(content)
+        Logger.error(content)
         ws.url(send_url).get().map{ response =>
           Logger.info(response.body)
         }       }

@@ -76,7 +76,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       val code: String = String.valueOf((100000 + Math.random * 900000).toInt)
       sms ! SMS(phone, code, SMSType.comm)
       cache_client.set("api" + phone, 180, code)
-      Logger.info(s"用户手机号：$phone api发送验证码成功")
+      Logger.error(s"用户手机号：$phone api发送验证码成功")
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.SEND_SUCCESS)))
     }
 
@@ -101,7 +101,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       User.insert(phone, password, request.remoteAddress) match {
         case Some(id) =>
           if (id > 0) {
-            Logger.info(s"用户手机号：$phone 注册成功")
+            Logger.error(s"用户手机号：$phone 注册成功")
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.REG_SUCCESS)))
           }
           else {
@@ -129,7 +129,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString("密码长度不能超过20位")))
     }
     else if (User.reset_password(phone, password) > 0) {
-      Logger.info(s"用户手机号：$phone 重置密码成功")
+      Logger.error(s"用户手机号：$phone 重置密码成功")
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_SUCCESS)))
     } else {
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.CHANGE_FAILED)))
@@ -152,7 +152,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         //已经存在的用户自动登录
         case Some(userInfo) =>
           User.login(userInfo.id, request.remoteAddress)
-          Logger.info(s"用户手机号：$phone 手机验证码形式登录成功")
+          Logger.error(s"用户手机号：$phone 手机验证码形式登录成功")
           Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
         //未注册的用户自动注册并登陆
         case None =>
@@ -163,7 +163,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
               if (id > 0) {
                 sms ! SMS(phone, password, SMSType.passwd) //actor发送短信
                 User.login(id, request.remoteAddress)
-                Logger.info(s"用户手机号：$phone 未注册自动注册登陆成功")
+                Logger.error(s"用户手机号：$phone 未注册自动注册登陆成功")
                 Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)))
               }
               else {
@@ -190,11 +190,10 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         User.find_by_phone(name, password) match {
           case Some(user) =>
             User.login(user.id, request.remoteAddress)
-            Logger.info(s"用户手机号码：$name 登陆成功")
+            Logger.error(s"用户手机号码：$name 登陆成功")
             val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
             //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
-            Logger.error(String.valueOf(user.id))
             couponsActor ! CouponsVo(None,Some(user.id),None,None,None,None,Some("S"),None,None,None,None)
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)
               , Systemcontents.API_RESULT_TOKEN -> JsString(token), Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7)))
@@ -205,7 +204,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         User.find_by_email(name, password) match {
           case Some(user) =>
             User.login(user.id, request.remoteAddress)
-            Logger.info(s"用户邮件：$name 登陆成功")
+            Logger.error(s"用户邮件：$name 登陆成功")
             val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)
@@ -217,7 +216,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         User.find_by_nickname(name, password) match {
           case Some(user) =>
             User.login(user.id, request.remoteAddress)
-            Logger.info(s"用户昵称：$name 登陆成功")
+            Logger.error(s"用户昵称：$name 登陆成功")
             val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
             cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsNumber(user.id), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
             Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.LOGIN_SUCCESS)
