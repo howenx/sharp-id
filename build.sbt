@@ -3,7 +3,7 @@ import play.sbt.PlayScala
 
 name := """style-id"""
 
-version := "0.1.0"
+version := "0.1.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
+  filters,
   specs2 % Test,
   "com.aliyun.oss" % "aliyun-sdk-oss" % "2.0.1",
   "com.typesafe.play" %% "anorm" % "2.5.0",
