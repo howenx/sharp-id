@@ -412,24 +412,25 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     request =>
       if (request.headers.get("id-token").isDefined) {
         val id_token = cache_client.get(request.headers.get("id-token").get)
-        val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
-        if (user_id.isDefined) {
-          couponsActor ! CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("S"),None,None,None,None)
-          //查询当前用户下所有未使用的优惠券数量
-          val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("N"),None,None,None,None))
-          UserInfo.findByUserId(user_id.get.toLong) match {
-            case Some(user) => Ok(Json.obj(
-              "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
-              "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
-                "photo" -> JsString(configuration.getString("oss.url").getOrElse("") + user.photoUrl.get),
-                "realYn" -> JsString(user.realYN.get),
-                "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get),"couponsCount"->JsNumber(couponVo.size)
-              )
-            ))
-            case None => Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
-          }
-        }
-        else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
+        if(id_token!=null && id_token!=Nil){
+          val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
+          if (user_id.isDefined) {
+            couponsActor ! CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("S"),None,None,None,None)
+            //查询当前用户下所有未使用的优惠券数量
+            val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("N"),None,None,None,None))
+            UserInfo.findByUserId(user_id.get.toLong) match {
+              case Some(user) => Ok(Json.obj(
+                "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
+                  "photo" -> JsString(configuration.getString("oss.url").getOrElse("") + user.photoUrl.get),
+                  "realYn" -> JsString(user.realYN.get),
+                  "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get),"couponsCount"->JsNumber(couponVo.size)
+                )
+              ))
+              case None => Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
+            }
+          } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
+        } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
       } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
   }
 
