@@ -63,7 +63,6 @@ object UserInfo {
       params = params :+ NamedParameter("userId", address.userId.get)
     }
     DB.withConnection() { implicit conn =>
-      play.Logger.error(SQL( """select i.add_id,i.tel,i."name",(i.delivery_city->>'province') ||(' ')|| (i.delivery_city->>'city')||(' ')||(i.delivery_city->>'area') as delivery_city,COALESCE((i.delivery_city->>'city_code'),'none') as city_code,i.delivery_detail,i.user_id,i.or_default::integer,i.id_card_num from id_address i WHERE """+ setString+ """ and i.or_destroy=false """).on(params: _*).as(addressMapping.*).toString())
       SQL( """select i.add_id,i.tel,i."name",(i.delivery_city->>'province') ||(' ')|| (i.delivery_city->>'city')||(' ')||(i.delivery_city->>'area') as delivery_city,COALESCE((i.delivery_city->>'city_code'),'none') as city_code,i.delivery_detail,i.user_id,i.or_default::integer,i.id_card_num from id_address i WHERE """+ setString+ """ and i.or_destroy=false """).on(params: _*).as(addressMapping.*)
     }
   }
@@ -116,7 +115,6 @@ object UserInfo {
       whereString +=""" and add_id={addId} """
       params = params :+ NamedParameter("addId", address.addId.get)
     }
-    play.api.Logger.error( """UPDATE id_address SET """ + setString+""" where 1=1 """+whereString)
 
     DB.withConnection { implicit c =>
       SQL( """UPDATE id_address SET """ + setString+""" where 1=1 """+whereString).on(params: _*).executeUpdate()

@@ -182,6 +182,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
         val addr: Address = new Address(None, None, None, None, None, Some(user_id.get.toLong), None, None, None,None)
         val adds: List[Address] = UserInfo.allAddress(addr)
         if (adds.nonEmpty) {
+          Logger.info("user select all address.")
           result.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
           result.put("address", adds)
           Ok(JsonUtil.toJson(result))
@@ -230,6 +231,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     case Some(content) =>
                       cache.put("address", new Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None))
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
+                      Logger.info("user insert address: "+address.name)
                       Ok(JsonUtil.toJson(cache))
                     case None =>
                       cache.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
@@ -249,6 +251,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     case Some(content) =>
                       cache.put("address", new Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(0), data.idCardNum, data.orDestroy, None))
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
+                      Logger.info("user insert address: "+address.name)
                       Ok(JsonUtil.toJson(cache))
                     case None =>
                       cache.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
@@ -261,6 +264,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     case Some(content) =>
                       cache.put("address", new Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None))
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
+                      Logger.info("user insert address: "+address.name)
                       Ok(JsonUtil.toJson(cache))
                     case None =>
                       cache.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
@@ -312,6 +316,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None)
                     val result = UserInfo.updateAddress(address)
                     if (result >= 0) {
+                      Logger.info("user delete address: "+address.name)
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                       Ok(JsonUtil.toJson(cache))
                     } else {
@@ -329,6 +334,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(0), data.idCardNum, data.orDestroy, None)
                     val result = UserInfo.updateAddress(address)
                     if (result >= 0) {
+                      Logger.info("user delete address: "+address.name)
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                       Ok(JsonUtil.toJson(cache))
                     } else {
@@ -339,6 +345,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None)
                     val result = UserInfo.updateAddress(address)
                     if (result >= 0) {
+                      Logger.info("user delete address: "+address.name)
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                       Ok(JsonUtil.toJson(cache))
                     } else {
@@ -365,6 +372,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                       val new_add = new Address(add_temp.addId, None, None, None, None, Some(user_id.get.toLong), Some(1), None, None, None)
                       val result = UserInfo.updateAddress(new_add)
                       if (result >= 0) {
+                        Logger.info("user delete address: "+address.name)
                         cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                         Ok(JsonUtil.toJson(cache))
                       } else {
@@ -380,6 +388,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                 val address_del: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), data.orDefault, data.idCardNum, Some(true), None)
                 val result = UserInfo.updateAddress(address_del)
                 if (result >= 0) {
+                  Logger.info("user delete address: "+address_del.name)
                   cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                   Ok(JsonUtil.toJson(cache))
                 } else {
@@ -419,14 +428,16 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
             //查询当前用户下所有未使用的优惠券数量
             val couponVo:List[CouponsVo]=Coupons.searchAllCoupons(CouponsVo(None,Some(user_id.get.toLong),None,None,None,None,Some("N"),None,None,None,None))
             UserInfo.findByUserId(user_id.get.toLong) match {
-              case Some(user) => Ok(Json.obj(
-                "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
-                "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
-                  "photo" -> JsString(configuration.getString("oss.url").getOrElse("") + user.photoUrl.get),
-                  "realYn" -> JsString(user.realYN.get),
-                  "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get),"couponsCount"->JsNumber(couponVo.size)
-                )
-              ))
+              case Some(user) =>
+                Logger.info("user select personal info: "+user.phoneNum)
+                Ok(Json.obj(
+                  "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                  "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
+                    "photo" -> JsString(configuration.getString("oss.url").getOrElse("") + user.photoUrl.get),
+                    "realYn" -> JsString(user.realYN.get),
+                    "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get),"couponsCount"->JsNumber(couponVo.size)
+                  )
+                ))
               case None => Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
             }
           } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
@@ -461,8 +472,10 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
 
                 userDetail = new UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some("/"+ keya), data.status)
               }
-              if (UserInfo.updateUserDetail(userDetail) >= 0)
+              if (UserInfo.updateUserDetail(userDetail) >= 0){
+                Logger.info("user update personal info: "+userDetail.phoneNum)
                 Ok(Json.obj("message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue)))
+              }
               else Ok(Json.obj("message" -> Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue)))
             } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
           } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
