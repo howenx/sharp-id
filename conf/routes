@@ -35,6 +35,8 @@ GET     /toReg                      controllers.RegApplication.toReg
 POST    /regSendCode                controllers.RegApplication.sendCode
 GET     /getImageCodes/:id    		  controllers.RegApplication.getImageCodes(id:Integer)
 POST    /regSubmit                  controllers.RegApplication.regSubmit
+POST    /reg/verify                 controllers.Api.verify_phone(choose:Integer ?= 1)
+POST    /reset/verify               controllers.Api.verify_phone(choose:Integer ?= 2)
 
 #login
 GET     /toLogin                    controllers.LoginApplication.toLogin

@@ -7,6 +7,7 @@ import play.mvc.Controller;
 import java.util.HashMap;
 
 /**
+ *
  * Created by china_005 on 15/10/26.
  */
 public class Systemcontents extends Controller {
@@ -23,7 +24,7 @@ public class Systemcontents extends Controller {
     public static final String EMAIL_TYPE_ERROR = "邮箱格式错误";
     public static final String PHONE_CODE_ERROR ="验证码错误";
     public static final String IMAGE_CODE_ERROR ="图片验证码错误";
-    public static final String USER_PASSWORD_ERROR ="密码错误";
+    public static final String USER_PASSWORD_ERROR ="用户名或密码错误";
     public static final String USER_INFO_ERROR ="用户信息错误";
     public static final String CHANGE_SUCCESS ="修改成功";
     public static final String CHANGE_FAILED ="修改失败";

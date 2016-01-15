@@ -25,13 +25,63 @@ import scala.language.postfixOps
 case class Message(var message: String, var code: Int)
 
 object ChessPiece extends Enumeration {
-  val SUCCESS = ChessPieceVal("成功", 200)
-  val FAILURE = ChessPieceVal("失败", 400)
-  val ERROR = ChessPieceVal("内部发生错误", 1001)
-  val SERVER_EXCEPTION = ChessPieceVal("服务器异常", 1002)
-  val BAD_PARAMETER = ChessPieceVal("参数不合法", 1003)
-  val BAD_USER_TOKEN = ChessPieceVal("用户不存在", 1004)
-  val DATABASE_EXCEPTION = ChessPieceVal("数据库操作异常", 1005)
+
+  val SUCCESS= ChessPieceVal("成功", 200)
+  val FAILURE= ChessPieceVal("失败", 400)
+
+  val FAILURE_REQUEST_ERROR= ChessPieceVal("失败", 441)
+  val FAILURE_REQUEST_HANDLER_NOT_FOUND= ChessPieceVal("失败", 442)
+  val FAILURE_BAD_REQUEST= ChessPieceVal("失败", 443)
+
+  val ERROR= ChessPieceVal("内部发生错误", 1001)
+  val SERVER_EXCEPTION= ChessPieceVal("服务器异常", 1002)
+  val BAD_PARAMETER= ChessPieceVal("参数不合法", 1003)
+  val BAD_USER_TOKEN= ChessPieceVal("用户不存在", 1004)
+  val DATABASE_EXCEPTION= ChessPieceVal("数据库操作异常", 1005)
+  val CREATE_ORDER_EXCEPTION= ChessPieceVal("创建订单异常", 1006)
+  val REFUND_SUCCESS= ChessPieceVal("退款成功",1007)
+  val REFUND_FAILED= ChessPieceVal("退款失败",1008)
+  val ORDER_CANCEL_AUTO= ChessPieceVal("未支付订单超过24小时,已被自动取消",1009)
+  val ORDER_DEL= ChessPieceVal("交易未完成不能删除订单",1010)
+  val SLIDER_NULL_EXCEPTION= ChessPieceVal("获取滚动条数据空", 1011)
+  val THEME_NULL_EXCEPTION= ChessPieceVal("获取主题数据空", 1012)
+  val THEME_LIST_NULL_EXCEPTION= ChessPieceVal("获取主题列表数据空", 1013)
+  val SKU_DETAIL_NULL_EXCEPTION= ChessPieceVal("获取产品详情数据空", 1014)
+  val CART_LIST_NULL_EXCEPTION= ChessPieceVal("获取购物车数据空", 1015)
+  val NOT_FOUND_SHIP_FEE_INFO= ChessPieceVal("未找到邮费信息", 1016)
+
+  val SKU_AMOUNT_SHORTAGE= ChessPieceVal("亲,此件商品库存不足了", 2001)
+  val SKU_INVALID= ChessPieceVal("亲,您已经长时间未操作,此商品已经失效,建议您刷新购物车", 2002)
+
+  val PURCHASE_QUANTITY_LIMIT= ChessPieceVal("亲,您购买数量超过我们的限制了", 3001)
+  val PURCHASE_QUANTITY_SUM_PRICE= ChessPieceVal("海关规定单次报关物品价值不能超过1000元", 3002)
+
+  val PASSWORD_ERROR_TOO_MANY= ChessPieceVal("密码错误次数过多", 4001)
+
+  val USERNAME_OR_PASSWORD_ERROR= ChessPieceVal("用户名或密码有误", 4002)
+
+  val NOT_REGISTERED= ChessPieceVal("用户未注册", 4003)
+
+  val INPUT_VERIFY_FAILED = ChessPieceVal("输入信息有误", 4004)
+
+  val PASSWORD_ERROR_LOCKED = ChessPieceVal("密码输错次数过多账户将被锁1小时,请1小时后再来登录", 4005)
+
+  val PASSWORD_ERROR_LOCKED_NOTIFY = ChessPieceVal("账户已被锁,请稍后再来登录", 4006)
+
+  val IMAGE_CODE_ERROR = ChessPieceVal("验证码校验失败", 4007)
+
+  val IMAGE_CODE_NULL = ChessPieceVal("验证码不能为空", 4008)
+
+  val USER_EXISTS = ChessPieceVal("此手机已经注册", 5001)
+
+  val SMS_CODE_ERROR = ChessPieceVal("短信验证码错误", 5002)
+
+  val PASSWORD_VERIFY_ERROR = ChessPieceVal("密码不符合规则", 5003)
+
+  val SECURITY_ERROR = ChessPieceVal("安全校验不通过", 5004)
+
+  val SEND_SMS_TOO_MANY = ChessPieceVal("发送验证码次数过多,请明天再试", 5005)
+
 
   protected case class ChessPieceVal(string: String, pointValue: Int) extends super.Val()
 
@@ -316,7 +366,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                     val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None)
                     val result = UserInfo.updateAddress(address)
                     if (result >= 0) {
-                      Logger.info("user delete address: "+address.name)
+                      Logger.info("user update address: "+address.name)
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                       Ok(JsonUtil.toJson(cache))
                     } else {
@@ -330,22 +380,29 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                 } else {
                   //如果用户要设置当前地址为非默认地址,那么就查询当前是否有其他地址为默认地址,否则仍旧设置当前地址为默认地址
                   val address: Address = new Address(None, None, None, None, None, Some(user_id.get.toLong), Some(1), None, Some(false), None)
-                  if (UserInfo.allAddress(address).nonEmpty) {
-                    val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(0), data.idCardNum, data.orDestroy, None)
-                    val result = UserInfo.updateAddress(address)
-                    if (result >= 0) {
-                      Logger.info("user delete address: "+address.name)
+                  val addList:List[Address]  = UserInfo.allAddress(address)
+                  if (addList.nonEmpty) {
+                    if (!addList.head.addId.equals(data.addId)){
+                      val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(0), data.idCardNum, data.orDestroy, None)
+                      val result = UserInfo.updateAddress(address)
+                      if (result >= 0) {
+                        Logger.info("user update address: "+address.name)
+                        cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
+                        Ok(JsonUtil.toJson(cache))
+                      } else {
+                        cache.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
+                        Ok(JsonUtil.toJson(cache))
+                      }
+                    }else{
+                      Logger.info("user update address: "+address.name)
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
-                      Ok(JsonUtil.toJson(cache))
-                    } else {
-                      cache.put("message", Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue))
                       Ok(JsonUtil.toJson(cache))
                     }
                   } else {
                     val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.get.toLong), Some(1), data.idCardNum, data.orDestroy, None)
                     val result = UserInfo.updateAddress(address)
                     if (result >= 0) {
-                      Logger.info("user delete address: "+address.name)
+                      Logger.info("user update address: "+address.name)
                       cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                       Ok(JsonUtil.toJson(cache))
                     } else {

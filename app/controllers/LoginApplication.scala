@@ -23,9 +23,6 @@ case class PhoneLoginForm (phoneNum:String,code:String)
 
 case class NameLoginForm (name:String,passwd:String)
 
-/**
- * Created by china_005 on 15/10/27.
- */
 class LoginApplication @Inject() (oss_client : OSSClientProvider, cache_client: MemcachedClient, @Named("sms") sms:ActorRef,configuration: Configuration)  extends Controller{
 
   val sendCodeForm :Form[SendCodeForm] = Form(

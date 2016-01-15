@@ -121,9 +121,9 @@ object User {
     * @return
     */
   def insert(phone: String, passwd: String, ip: String): Option[Long] = {
-    val nickname = String.valueOf((100000 + Math.random * 900000).toInt)
+    val nickname = "HMM "+phone.substring(0,3)+"****"+phone.substring(6,10)
     DB.withConnection() { implicit conn =>
-      SQL( """insert into "ID" (nickname,passwd,email,phone_num,reg_ip,"active_YN",lastlogin_ip) values ({nickname},user_passwd(currval('"ID_user_id_seq"'::regclass),{passwd}),{email},{phone_num},cidr({reg_ip}),{active_YN},cidr({lastlogin_ip})) """).on("nickname" -> nickname, "passwd" -> passwd, "email" -> "", "phone_num" -> phone, "reg_ip" -> ip, "active_YN" -> "N", "lastlogin_ip" -> ip).executeInsert()
+      SQL( """insert into "ID" (nickname,passwd,email,phone_num,reg_ip,"active_YN",lastlogin_ip,reg_dt) values ({nickname},user_passwd(currval('"ID_user_id_seq"'::regclass),{passwd}),{email},{phone_num},cidr({reg_ip}),{active_YN},cidr({lastlogin_ip}),CURRENT_TIMESTAMP(0)) """).on("nickname" -> nickname, "passwd" -> passwd, "email" -> "", "phone_num" -> phone, "reg_ip" -> ip, "active_YN" -> "N", "lastlogin_ip" -> ip).executeInsert()
     }
   }
 

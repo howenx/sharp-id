@@ -18,6 +18,7 @@ import play.api.mvc.{ResponseHeader, Result, Action, Controller}
 import utils.{ImageCodeService, SystemService}
 
 /**
+  *
  * Created by china_005 on 15/10/23.
  */
 
@@ -51,20 +52,20 @@ class RegApplication @Inject() (oss_client : OSSClientProvider, cache_client: Me
     try {
       val i: Int = is.available
       data = new Array[Byte](i)
-      while ((({
-        count = is.read(data, 0, i); count
-      })) != -1) out.write(data, 0, count)
+      while ( {
+        count = is.read(data, 0, i)
+        count
+      } != -1) out.write(data, 0, count)
       data = null
-      cache_client.set(code, 180, code)
+      cache_client.set(code.toUpperCase, 60*60*3, code)
       Result(
         header = ResponseHeader(200, Map(CONTENT_TYPE -> "text/plain")),
         body = Enumerator(out.toByteArray)
       )
     }
     catch {
-      case ex: IOException => {
-        Ok("error")
-      }
+      case ex: IOException => Ok("error")
+
     }
   }
 
