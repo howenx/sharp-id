@@ -88,7 +88,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       Ok(Json.obj("message" -> Message(ChessPiece.SECURITY_ERROR.string, ChessPiece.SECURITY_ERROR.pointValue)))
     }
     else {
-      Logger.error("发送次数->>>>> "+code_times)
+      Logger.error("发送次数->>>>> "+(if(code_times==null) 0 else code_times))
       if (code_times != null && code_times.toString.toInt > 10) {
         Logger.info(s"此用户手机号：$phone api发送验证码当天超过10次")
         Ok(Json.obj("message" -> Message(ChessPiece.SEND_SMS_TOO_MANY.string, ChessPiece.SEND_SMS_TOO_MANY.pointValue)))
@@ -180,7 +180,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
   }
 
 
-  def verify_phone(choose: Int) = Action { implicit request =>
+  def verify_phone(choose: Integer) = Action { implicit request =>
 
     val data = user_reg_form.bindFromRequest().get
     if (data.phone.isDefined) {
@@ -243,7 +243,6 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
         //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
         couponsActor ! CouponsVo(None, Some(user.id), None, None, None, None, Some("S"), None, None, None, None)
-        Logger.info(s"用户手机号：$name 手机验证码形式登录成功")
         token
       case None => null
     }
@@ -299,9 +298,6 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 if (code.equals("-1")) {
                   Ok(Json.obj("message" -> Message(ChessPiece.PASSWORD_ERROR_TOO_MANY.string, ChessPiece.PASSWORD_ERROR_TOO_MANY.pointValue)))
                 } else if (cache_client.get(code.toUpperCase) != null && cache_client.get(code.toUpperCase).equals(code.toUpperCase)) {
-
-                  Logger.error("尼玛的验证码: " + cache_client.get(code.toUpperCase))
-
                   if (token != null) {
                     cache_client.delete(name + "_check")
                     Ok(Json.obj(

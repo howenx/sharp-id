@@ -490,7 +490,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                 Ok(Json.obj(
                   "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
                   "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
-                    "photo" -> JsString(configuration.getString("oss.url").getOrElse("") + user.photoUrl.get),
+                    "photo" -> JsString(configuration.getString("oss.url").getOrElse("")+ user.photoUrl.get),
                     "realYn" -> JsString(user.realYN.get),
                     "phoneNum" -> JsString(user.phoneNum.get),"gender"->JsString(user.gender.get),"couponsCount"->JsNumber(couponVo.size)
                   )
@@ -527,7 +527,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                 val keya = "users/photo" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
                 oss ! OSSIS(isa, keya, bytea.length)
 
-                userDetail = new UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some("/"+ keya), data.status)
+                userDetail = new UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some(keya), data.status)
               }
               if (UserInfo.updateUserDetail(userDetail) >= 0){
                 Logger.info("user update personal info: "+userDetail.phoneNum)

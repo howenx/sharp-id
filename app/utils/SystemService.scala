@@ -1,9 +1,8 @@
 package utils
 
 
-import controllers.Systemcontents
 import org.apache.commons.lang3.StringUtils
-import sun.security.util.Password
+import play.Play
 
 
 /**
@@ -16,7 +15,7 @@ object SystemService {
     if(StringUtils.isEmpty(phoneNum)){
        false
     }
-    else if(phoneNum.length()!=Systemcontents.PHONENUM_LENGTH){
+    else if(phoneNum.length()!=11){
        false
     }
     else{
@@ -77,7 +76,7 @@ object SystemService {
   }
 
   def  getEmailHtml (link : String):String = {
-  "<html>" + "<head>" + "<meta charset=\"utf-8\"><title>5游网--WWW.5DSY.CN</title>" + "<meta name=\"keywords\" content=\"手游,网游,游戏\">" + "<style>" + "body{margin: 0;paddding:0;}" + ".mail{width: 600px;border: 1px solid #000;margin: 15px auto;padding: 0 0 30px;}" + ".header{width: 100%; padding: 15px 0;background: #393939;}" + ".header a{margin-left: 5%; display: block;}" + "p{margin: 0; color: #656566; padding: 0 5%;}" + ".p1{margin: 50px 0 10px;}.p2{margin: 30px 0 10px;}" + ".ft{margin-top: 100px;color: #656566;padding: 0 5%;}" + "</style>" + "</head>" + "<body>" + "<div class=\"mail\">" + "<div class=\"header\">" + "<a href=\"" + Systemcontents.INDEX_PAGE + "\"><img src=\"http://wodeshouyou.oss-cn-hangzhou.aliyuncs.com/img/small-logo.png\"></a>" + "</div>" + "<p class=\"p1\">尊敬的用户，您好!</p>" + "<p class=\"p2\">5游网已经收到了您激活邮箱的请求，请点击" + "<a href=\"" + link + "\">此链接完成激活</a></p>" + "<p class=\"p3\">（本链接30分钟内有效)</p>" + "<div class=\"ft\">公司网址：" + "<a href=\"http://www.5dsy.cn/\">WWW.5DSY.CN</a>" + "</div>" + "</div>" + "</body>" + "</html>"
+  "<html>" + "<head>" + "<meta charset=\"utf-8\"><title>5游网--WWW.5DSY.CN</title>" + "<meta name=\"keywords\" content=\"手游,网游,游戏\">" + "<style>" + "body{margin: 0;paddding:0;}" + ".mail{width: 600px;border: 1px solid #000;margin: 15px auto;padding: 0 0 30px;}" + ".header{width: 100%; padding: 15px 0;background: #393939;}" + ".header a{margin-left: 5%; display: block;}" + "p{margin: 0; color: #656566; padding: 0 5%;}" + ".p1{margin: 50px 0 10px;}.p2{margin: 30px 0 10px;}" + ".ft{margin-top: 100px;color: #656566;padding: 0 5%;}" + "</style>" + "</head>" + "<body>" + "<div class=\"mail\">" + "<div class=\"header\">" + "<a href=\"" + Play.application().configuration().getString("indexPage") + "\"><img src=\"http://wodeshouyou.oss-cn-hangzhou.aliyuncs.com/img/small-logo.png\"></a>" + "</div>" + "<p class=\"p1\">尊敬的用户，您好!</p>" + "<p class=\"p2\">5游网已经收到了您激活邮箱的请求，请点击" + "<a href=\"" + link + "\">此链接完成激活</a></p>" + "<p class=\"p3\">（本链接30分钟内有效)</p>" + "<div class=\"ft\">公司网址：" + "<a href=\"http://www.5dsy.cn/\">WWW.5DSY.CN</a>" + "</div>" + "</div>" + "</body>" + "</html>"
 }
 
 

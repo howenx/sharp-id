@@ -1,14 +1,12 @@
 package controllers;
-
 import play.Logger;
 import play.Play;
 import play.mvc.Controller;
 
 import java.util.HashMap;
-
 /**
- *
- * Created by china_005 on 15/10/26.
+ * Systemcontents
+ * Created by howen on 16/2/28.
  */
 public class Systemcontents extends Controller {
 
@@ -60,7 +58,7 @@ public class Systemcontents extends Controller {
 
 
 
-    public static final HashMap<String,String> map = new HashMap<String,String>();
+    public static final HashMap map = new HashMap();
 
 
     private static volatile Systemcontents systemcontents = null;
@@ -92,6 +90,6 @@ public class Systemcontents extends Controller {
     }
 
     public String getErrorMsg(String code){
-        return map.get(code);
+        return (String) map.get(code);
     }
 }

@@ -20,7 +20,7 @@ class LoggingFilter extends EssentialFilter {
         val endTime = System.currentTimeMillis
         val requestTime = endTime - startTime
 
-        accessLogger.error(s"${requestHeader.method} ${requestHeader.domain}${requestHeader.uri}" +
+        accessLogger.info(s"${requestHeader.method} ${requestHeader.domain}${requestHeader.uri}" +
           s" remoteAddress:${requestHeader.remoteAddress} "+
           s" id-token:${requestHeader.getQueryString("id-token")} "+
           s" took:${requestTime}ms status: ${result.header.status}")

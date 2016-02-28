@@ -1,63 +1,29 @@
-# Routes
-# This file defines all application routes (Higher priority routes first)
-# ~~~~
 
-# Home page
-GET     /                           controllers.Application.index
-GET     /index                      controllers.Application.index
-GET     /redirect                   controllers.Application.redirect
-GET     /getUserName                controllers.Application.getUserName
-GET     /loginOut                   controllers.Application.loginOut
-
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
 #api
-POST    /api/send_code              controllers.Api.send_code
-POST    /api/reg                    controllers.Api.reg
-POST    /api/reset_password         controllers.Api.reset_password
-POST    /api/login_phone_num        controllers.Api.login_phone_num
-POST    /api/login_user_name        controllers.Api.login_user_name
-POST    /api/refresh_token          controllers.Api.refresh_token
+POST        /api/send_code              controllers.Api.send_code
+POST        /api/reg                    controllers.Api.reg
+POST        /api/reset_password         controllers.Api.reset_password
+POST        /api/login_phone_num        controllers.Api.login_phone_num
+POST        /api/login_user_name        controllers.Api.login_user_name
+POST        /api/refresh_token          controllers.Api.refresh_token
 
+POST        /regSendCode                controllers.RegApplication.sendCode
+GET         /getImageCodes/:id          controllers.RegApplication.getImageCodes(id:Integer)
+POST        /regSubmit                  controllers.RegApplication.regSubmit
 
 #UserInfo
-POST    /api/address/update         controllers.ApiUserInfo.update_address(handle:Integer ?= 1)
-POST    /api/address/del            controllers.ApiUserInfo.update_address(handle:Integer ?= 2)
-GET     /api/address/list           controllers.ApiUserInfo.all_address
-POST    /api/address/add						controllers.ApiUserInfo.insert_address
-POST    /api/user/verify            controllers.ApiUserInfo.change_real_name
-GET     /api/user/get/info          controllers.ApiUserInfo.select_user_info
-POST    /api/user/update            controllers.ApiUserInfo.update_user_info
+POST        /api/address/update         controllers.ApiUserInfo.update_address(handle:Integer ?= 1)
+POST        /api/address/del            controllers.ApiUserInfo.update_address(handle:Integer ?= 2)
+GET         /api/address/list           controllers.ApiUserInfo.all_address
+POST        /api/address/add            controllers.ApiUserInfo.insert_address
+POST        /api/user/verify            controllers.ApiUserInfo.change_real_name
+GET         /api/user/get/info          controllers.ApiUserInfo.select_user_info
+POST        /api/user/update            controllers.ApiUserInfo.update_user_info
 
 #reg
-GET     /toReg                      controllers.RegApplication.toReg
-POST    /regSendCode                controllers.RegApplication.sendCode
-GET     /getImageCodes/:id    		  controllers.RegApplication.getImageCodes(id:Integer)
-POST    /regSubmit                  controllers.RegApplication.regSubmit
-POST    /reg/verify                 controllers.Api.verify_phone(choose:Integer ?= 1)
-POST    /reset/verify               controllers.Api.verify_phone(choose:Integer ?= 2)
+POST        /reg/verify                 controllers.Api.verify_phone(choose:Integer ?= 1)
+POST        /reset/verify               controllers.Api.verify_phone(choose:Integer ?= 2)
 
-#login
-GET     /toLogin                    controllers.LoginApplication.toLogin
-POST    /loginSendCode              controllers.LoginApplication.sendCode
-POST    /loginByTel                 controllers.LoginApplication.loginByTel
-POST    /loginByName                controllers.LoginApplication.loginByName
-
-#resetPassword
-GET     /toResetPassword            controllers.ResetPassWordApplication.toResetPassword
-POST    /resetSendCode              controllers.ResetPassWordApplication.sendCode
-POST    /resetPasswordSubmit        controllers.ResetPassWordApplication.resetPasswordSubmit
-
-#userDetail
-GET     /toUserDetail               controllers.UserDetailApplication.toUserDetail
-POST    /detailSendCode             controllers.UserDetailApplication.sendCode
-POST    /changePhone                controllers.UserDetailApplication.changePhone
-POST    /changePassword             controllers.UserDetailApplication.changePassword
-POST    /sendEmail                  controllers.UserDetailApplication.sendEmail
-POST    /active/:str                controllers.UserDetailApplication.active(str:String)
-
-#userChange
-GET     /toUserChange/:msg          controllers.UserChangeApplication.toUserChange(msg:String)
-POST    /changeFormSubmit           controllers.UserChangeApplication.changeFormSubmit
 
