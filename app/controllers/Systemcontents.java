@@ -8,6 +8,7 @@ import java.util.HashMap;
  * Systemcontents
  * Created by howen on 16/2/28.
  */
+@SuppressWarnings("unchecked")
 public class Systemcontents extends Controller {
 
     public static final String STATIC_URL = Play.application().configuration().getString("staticUrl");
