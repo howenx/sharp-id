@@ -189,8 +189,8 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
             val byteb = Base64.decodeBase64(data.cardImgB.get.getBytes)
             val isa = new ByteArrayInputStream(bytea)
             val isb = new ByteArrayInputStream(byteb)
-            val keya = "style" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
-            val keyb = "style" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
+            val keya = "style" + "/" + DateTimeFormat.forPattern("yyyyMMdd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
+            val keyb = "style" + "/" + DateTimeFormat.forPattern("yyyyMMdd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
             val json = play.libs.Json.newObject()
             json.put("cardImgA", "/" + keya)
             json.put("cardImgB", "/" + keyb)
@@ -518,19 +518,20 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
             val id_token = cache_client.get(request.headers.get("id-token").get)
             val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
 
-            var userDetail: UserDetail = new UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, data.photoUrl, data.status)
+            var userDetail: UserDetail = UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, data.photoUrl, data.status)
 
             if (user_id.isDefined) {
               if (data.photoUrl.isDefined) {
                 val bytea = Base64.decodeBase64(data.photoUrl.get.getBytes)
                 val isa = new ByteArrayInputStream(bytea)
-                val keya = "users/photo" + "/" + DateTimeFormat.forPattern("yyyy-MM-dd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
+                val keya = "users/photo" + "/" + DateTimeFormat.forPattern("yyyyMMdd").print(new DateTime) + "/" + System.currentTimeMillis + scala.util.Random.nextInt(6) + ".jpg"
                 oss ! OSSIS(isa, keya, bytea.length)
 
-                userDetail = new UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some(keya), data.status)
+                Logger.info("用户更新头像:"+user_id.get+" ---> "+keya)
+                userDetail = UserDetail(Some(user_id.get.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some(keya), data.status)
               }
               if (UserInfo.updateUserDetail(userDetail) >= 0){
-                Logger.info("user update personal info: "+userDetail.phoneNum)
+                Logger.info("user update personal info: "+userDetail.userId.get)
                 Ok(Json.obj("message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue)))
               }
               else Ok(Json.obj("message" -> Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue)))

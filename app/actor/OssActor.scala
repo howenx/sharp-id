@@ -28,14 +28,14 @@ class OssActor @Inject() (oss_client : OSSClientProvider,configuration: Configur
       objMetadata.setContentLength(oss.file.file.length())
       objMetadata.setContentType(oss.file.file.getName.replaceFirst("^[^.]*", ""))
       val result = oss_client.get.putObject(configuration.getString("oss.bucket").getOrElse(""), oss.key, is, objMetadata)
-      Logger.info(result.getETag)
+//      Logger.info(result.getETag)
 
     case ossis:OSSIS =>
       val objMetadata = new ObjectMetadata()
       objMetadata.setContentLength(ossis.len)
       objMetadata.setContentType("jpg")
       val result = oss_client.get.putObject(configuration.getString("oss.bucket").getOrElse(""), ossis.key, ossis.is, objMetadata)
-      Logger.info(result.getETag)
+//      Logger.info(result.getETag)
 
   }
 
