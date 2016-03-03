@@ -26,7 +26,7 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
     case sms: SMS =>
       val mobile = sms.phone_num
       val code = sms.code
-      var content = s"验证码为：$code，3分钟内有效。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
+      var content = s"验证码为：$code。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
       val key = Codecs.md5((sms.phone_num + sms.sms_type).getBytes)
       var bl: Boolean = false
       if (cache_client.get(key) == null) {
@@ -47,7 +47,7 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
       if (bl) {
         sms.sms_type match {
           case SMSType.comm =>
-            content = s"验证码为：$code，3分钟内有效。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
+            content = s"验证码为：$code。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
           case SMSType.passwd =>
             content = s"欢迎您注册5游网，您的初始密码为$code，建议您尽快登录www.5dsy.cn修改密码！【5游网】"
           case SMSType.resetPasswd =>
