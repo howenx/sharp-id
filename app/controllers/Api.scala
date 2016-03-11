@@ -240,6 +240,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         User.login(user.id, remoteAddress)
         Logger.info(s"用户手机号码：$name 登陆成功")
         val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
+        //设置
+
         cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
         cache_client.set(user.id.toString,60 * 60 * 24 * 7,token)
         //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
@@ -272,6 +274,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 if (token != null) {
                   Ok(Json.obj(
                     "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                    Systemcontents.API_RESULT_USER_ID->JsNumber(userInfo.id),
                     Systemcontents.API_RESULT_TOKEN -> JsString(token),
                     Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7))
                   )
@@ -287,6 +290,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                   cache_client.delete(name + "_check")
                   Ok(Json.obj(
                     "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                    Systemcontents.API_RESULT_USER_ID->JsNumber(userInfo.id),
                     Systemcontents.API_RESULT_TOKEN -> JsString(token),
                     Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7))
                   )
@@ -303,6 +307,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     cache_client.delete(name + "_check")
                     Ok(Json.obj(
                       "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                      Systemcontents.API_RESULT_USER_ID->JsNumber(userInfo.id),
                       Systemcontents.API_RESULT_TOKEN -> JsString(token),
                       Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7))
                     )
@@ -349,7 +354,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       cache_client.set(Json.parse(cache_client.get(token).toString).\("id").asOpt[String].getOrElse(""), 60 * 60 * 24 * 7, newToken) //把用户信息换乘新的key
       cache_client.delete(token) //删除旧的cache信息
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(true), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_REFRESH_SUCCESS)
-        , Systemcontents.API_RESULT_TOKEN -> JsString(newToken), Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7)))
+        ,Systemcontents.API_RESULT_USER_ID->JsNumber(Json.parse(cache_client.get(token).toString).\("id").as[Long]), Systemcontents.API_RESULT_TOKEN -> JsString(newToken), Systemcontents.API_RESULT_OVER_TIME -> JsNumber(60 * 60 * 24 * 7)))
     } else {
       Ok(Json.obj(Systemcontents.API_RESULT_BOOLEAN -> JsBoolean(false), Systemcontents.API_RESULT_MESSAGE -> JsString(Systemcontents.API_RESULT_REFRESH_FAILED)))
     }

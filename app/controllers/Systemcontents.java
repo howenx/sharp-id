@@ -51,6 +51,7 @@ public class Systemcontents extends Controller {
     public static final String API_RESULT_MESSAGE ="message";
     public static final String API_RESULT_TOKEN ="token";
     public static final String API_RESULT_OVER_TIME ="expired";
+    public static final String API_RESULT_USER_ID ="id";
 
     public static final String RESULT_BOOLEAN="if";
     public static final String RESULT_MESSAGE ="back";
