@@ -16,7 +16,7 @@ import play.api.Play.current
 case class CouponsVo(coupId: Option[String], @JsonIgnore userId: Option[Long],@JsonIgnore cateId: Option[Long],denomination: Option[BigDecimal],startAt: Option[Timestamp],endAt: Option[Timestamp],state: Option[String],@JsonIgnore orderId: Option[Long],@JsonIgnore useAt: Option[Timestamp], limitQuota: Option[BigDecimal], couponsCount:Option[Int])
 
 
-object Coupons {
+object CouponsModel {
 
   val couponsMapping = {
     get[Option[String]]("coup_id") ~

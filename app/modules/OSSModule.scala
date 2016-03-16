@@ -1,5 +1,6 @@
 package modules
 
+import controllers.FormConstraint
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 
@@ -10,7 +11,8 @@ import play.api.inject.{Binding, Module}
 class OSSModule extends Module{
   override def bindings(environment: Environment, configuration: Configuration) : Seq[Binding[_]] = {
     Seq (
-      bind[OSSClientProvider].toSelf.eagerly()
+      bind[OSSClientProvider].toSelf.eagerly(),
+      bind[FormConstraint].toSelf
     )
   }
 }

@@ -1,4 +1,4 @@
-package controllers;
+package utils;
 import play.Logger;
 import play.Play;
 import play.mvc.Controller;

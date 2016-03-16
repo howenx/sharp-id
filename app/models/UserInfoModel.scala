@@ -15,7 +15,7 @@ case class Address(addId: Option[Long], tel: Option[String], name: Option[String
 
 case class UserDetail(userId: Option[Long], nickname: Option[String], phoneNum: Option[String], birthday: Option[String], activeYn: Option[String], realYN: Option[String], gender: Option[String], photoUrl: Option[String], status: Option[String])
 
-object UserInfo {
+object UserInfoModel {
 
   val addressMapping = {
     get[Long]("add_id") ~

@@ -16,7 +16,7 @@ case class UserMore(id: Long, nickname: String, gender: String, photo_url: Strin
   * Created by handy on 15/10/23.
   * Daumkakao china
   */
-object User {
+object UserModel {
   val user = {
     get[Long]("user_id") ~
       get[String]("nickname") ~
