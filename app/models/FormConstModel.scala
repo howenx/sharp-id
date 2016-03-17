@@ -1,16 +1,8 @@
-package controllers
+package models
 
-import javax.inject.{Inject, Named}
-
-import akka.actor.ActorRef
-import models._
-import net.spy.memcached.MemcachedClient
-import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
-import play.api.libs.Codecs
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -31,6 +23,7 @@ case class VerifyPhoneForm(phone: String, code: String)
 case class RefreshForm(token: String)
 
 case class RealNameForm(realName: Option[String], cardNum: Option[String], cardImgA: Option[String], cardImgB: Option[String])
+
 
 case class Message(var message: String, var code: Int)
 
@@ -99,25 +92,8 @@ object ChessPiece extends Enumeration {
 }
 
 
-class FormConstraint @Inject()(cache_client: MemcachedClient, @Named("coupons") couponsActor: ActorRef) {
+object FormConstModel {
 
-  /**
-    * 图形验证码的验证
-    */
-  val codeCheckConstraint: Constraint[String] = Constraint("constraints.codeCheck")({
-    code =>
-      val errors = code match {
-        case _ => if (code.equals("-1") || (cache_client.get(code.toUpperCase) != null && cache_client.get(code.toUpperCase).equals(code.toUpperCase))) {
-          Nil
-        }
-        else Seq(ValidationError("Code is wrong"))
-      }
-      if (errors.isEmpty) {
-        Valid
-      } else {
-        Invalid(errors)
-      }
-  })
 
   /**
     * 用户登录表单
@@ -129,7 +105,7 @@ class FormConstraint @Inject()(cache_client: MemcachedClient, @Named("coupons") 
     "password" -> nonEmptyText.verifying(minLength(6), maxLength(12)).verifying("Bad password regex", {
       _.matches("""^(?![0-9]+$)(?![a-zA-Z]+$)[a-zA-Z0-9]{6,12}""")
     }),
-    "code" -> nonEmptyText.verifying(codeCheckConstraint)
+    "code" -> nonEmptyText
   )(UserPhoneLoginForm.apply)(UserPhoneLoginForm.unapply))
 
   /**
@@ -139,7 +115,7 @@ class FormConstraint @Inject()(cache_client: MemcachedClient, @Named("coupons") 
     "phone" -> nonEmptyText.verifying(minLength(11), maxLength(11)).verifying("Bad phone regex", {
       _.matches("""[1][345678]\d{9}""")
     }),
-    "code" -> nonEmptyText.verifying(codeCheckConstraint)
+    "code" -> nonEmptyText
   )(VerifyPhoneForm.apply)(VerifyPhoneForm.unapply))
 
   /**
@@ -171,26 +147,9 @@ class FormConstraint @Inject()(cache_client: MemcachedClient, @Named("coupons") 
     "password" -> nonEmptyText.verifying(minLength(6), maxLength(12)).verifying("Bad password regex", {
       _.matches("""^(?![0-9]+$)(?![a-zA-Z]+$)[a-zA-Z0-9]{6,12}""")
     }),
-    "code" -> nonEmptyText.verifying(codeCheckConstraint)
+    "code" -> nonEmptyText
   )(ApiRegForm.apply)(ApiRegForm.unapply))
 
-
-  def login(id: Long, remoteAddress: String, name: String, password: String): String = {
-    UserModel.find_by_phone(name, password) match {
-      case Some(user) =>
-        UserModel.login(user.id, remoteAddress)
-        Logger.info(s"用户手机号码：$name 登陆成功")
-        val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
-        //设置
-
-        cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(String.valueOf(user.id)), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
-        cache_client.set(user.id.toString, 60 * 60 * 24 * 7, token)
-        //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
-        couponsActor ! CouponsVo(None, Some(user.id), None, None, None, None, Some("S"), None, None, None, None)
-        token
-      case None => null
-    }
-  }
 
   implicit lazy val realNameFormReads: Reads[RealNameForm] = (
     (__ \ "realName").readNullable[String] and
@@ -229,54 +188,4 @@ class FormConstraint @Inject()(cache_client: MemcachedClient, @Named("coupons") 
       (__ \ "gender").write[String] and
       (__ \ "photo_url").write[String]
     ) (unlift(User.unapply))
-
-  implicit lazy val addressReads: Reads[Address] = (
-    (__ \ "addId").readNullable[Long] and
-      (__ \ "tel").readNullable[String] and
-      (__ \ "name").readNullable[String] and
-      (__ \ "deliveryCity").readNullable[String] and
-      (__ \ "deliveryDetail").readNullable[String] and
-      (__ \ "userId").readNullable[Long] and
-      (__ \ "orDefault").readNullable[Int] and
-      (__ \ "idCardNum").readNullable[String] and
-      (__ \ "orDestroy").readNullable[Boolean] and
-      (__ \ "cityCode").readNullable[String]
-    ) (Address)
-
-  implicit lazy val addressWrites: Writes[Address] = (
-    (__ \ "addId").writeNullable[Long] and
-      (__ \ "tel").writeNullable[String] and
-      (__ \ "name").writeNullable[String] and
-      (__ \ "deliveryCity").writeNullable[String] and
-      (__ \ "deliveryDetail").writeNullable[String] and
-      (__ \ "userId").writeNullable[Long] and
-      (__ \ "orDefault").writeNullable[Int] and
-      (__ \ "idCardNum").writeNullable[String] and
-      (__ \ "orDestroy").writeNullable[Boolean] and
-      (__ \ "cityCode").writeNullable[String]
-    ) (unlift(Address.unapply))
-
-  implicit lazy val userDetailReads: Reads[UserDetail] = (
-    (__ \ "userId").readNullable[Long] and
-      (__ \ "nickname").readNullable[String] and
-      (__ \ "phoneNum").readNullable[String] and
-      (__ \ "birthday").readNullable[String] and
-      (__ \ "activeYn").readNullable[String] and
-      (__ \ "realYN").readNullable[String] and
-      (__ \ "gender").readNullable[String] and
-      (__ \ "photoUrl").readNullable[String] and
-      (__ \ "status").readNullable[String]
-    ) (UserDetail)
-
-  implicit lazy val userDetailWrites: Writes[UserDetail] = (
-    (__ \ "userId").writeNullable[Long] and
-      (__ \ "nickname").writeNullable[String] and
-      (__ \ "phoneNum").writeNullable[String] and
-      (__ \ "birthday").writeNullable[String] and
-      (__ \ "activeYn").writeNullable[String] and
-      (__ \ "realYN").writeNullable[String] and
-      (__ \ "gender").writeNullable[String] and
-      (__ \ "photoUrl").writeNullable[String] and
-      (__ \ "status").writeNullable[String]
-    ) (unlift(UserDetail.unapply))
 }

@@ -6,12 +6,14 @@ import javax.inject._
 
 import actor.{SMS, SMSType}
 import akka.actor.ActorRef
-import models.UserModel
+import filters.Authentication
+import models.FormConstModel._
+import models._
 import net.spy.memcached.MemcachedClient
 import play.api.libs.Codecs
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
-import play.api.mvc.{Action, Controller, ResponseHeader, Result}
+import play.api.mvc._
 import play.api.{Configuration, Logger}
 import utils.{ImageCodeService, SystemService, Systemcontents}
 
@@ -20,9 +22,34 @@ import utils.{ImageCodeService, SystemService, Systemcontents}
   * Created by howen on 16/3/16.
   */
 @Singleton
-class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef, configuration: Configuration, @Named("coupons") couponsActor: ActorRef) extends Controller {
+class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef, configuration: Configuration, @Named("coupons") couponsActor: ActorRef) extends Controller {
 
-  import form._
+  /**
+    * 登录操作
+    *
+    * @param id            id
+    * @param remoteAddress remoteAddress
+    * @param name          name
+    * @param password      password
+    * @return
+    */
+  def login(id: Long, remoteAddress: String, name: String, password: String): String = {
+    UserModel.find_by_phone(name, password) match {
+      case Some(user) =>
+        UserModel.login(user.id, remoteAddress)
+        Logger.info(s"用户手机号码：$name 登陆成功")
+        val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
+        //设置
+
+        cache_client.set(token, 60 * 60 * 24 * 7, Json.stringify(Json.obj("id" -> JsString(user.id.toString), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
+        cache_client.set(user.id.toString, 60 * 60 * 24 * 7, token)
+        //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
+        couponsActor ! CouponsVo(None, Some(user.id), None, None, None, None, Some("S"), None, None, None, None)
+        token
+      case None => null
+    }
+  }
+
   /**
     * 发送短信验证码
     *
@@ -31,6 +58,7 @@ class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named(
   def send_code = Action { implicit request =>
     send_code_form.bindFromRequest().fold(
       formWithErrors => {
+        Logger.error("表单校验错误信息--->" + send_code_form.bindFromRequest().errors.mkString)
         Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       },
       data => {
@@ -110,6 +138,7 @@ class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named(
   def reg = Action { implicit request =>
     api_reg_form.bindFromRequest().fold(
       formWithErrors => {
+        Logger.error("表单校验错误信息--->" + api_reg_form.bindFromRequest().errors.mkString)
         Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       },
       data => {
@@ -159,6 +188,7 @@ class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named(
   def reset_password = Action { implicit request =>
     api_reg_form.bindFromRequest().fold(
       formWithErrors => {
+        Logger.error("表单校验错误信息--->" + api_reg_form.bindFromRequest().errors.mkString)
         BadRequest(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       },
       data => {
@@ -200,6 +230,7 @@ class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named(
   def verify_phone() = Action { implicit request =>
     verify_phone_form.bindFromRequest().fold(
       formWithErrors => {
+        Logger.error("表单校验错误信息--->" + verify_phone_form.bindFromRequest().errors.mkString)
         Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       },
       data => {
@@ -243,9 +274,9 @@ class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named(
     */
   def login_user_phone() = Action { implicit request =>
 
-    Logger.error("错误信息--->\n" + user_phone_login_form.bindFromRequest().errors.mkString)
     user_phone_login_form.bindFromRequest().fold(
       formWithErrors => {
+        Logger.error("表单校验错误信息--->" + user_phone_login_form.bindFromRequest().errors.mkString)
         Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       },
       data => {
@@ -343,6 +374,7 @@ class Api @Inject()(form: FormConstraint, cache_client: MemcachedClient, @Named(
   def refresh_token = Action { implicit request =>
     refresh_form.bindFromRequest().fold(
       formWithErrors => {
+        Logger.error("表单校验错误信息--->" + refresh_form.bindFromRequest().errors.mkString)
         Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       },
       data => {

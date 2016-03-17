@@ -1,10 +1,10 @@
 package modules
 
-import javax.inject.{Provider, Inject, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 
 import com.aliyun.oss.OSSClient
-import play.api.{Logger, Configuration}
 import play.api.inject.ApplicationLifecycle
+import play.api.{Configuration, Logger}
 
 import scala.concurrent.Future
 

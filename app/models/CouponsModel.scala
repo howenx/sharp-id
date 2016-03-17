@@ -6,8 +6,8 @@ import anorm.SqlParser._
 import anorm._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.joda.time.DateTime
-import play.api.db.DB
 import play.api.Play.current
+import play.api.db.DB
 
 /**
   * 用户优惠券

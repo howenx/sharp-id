@@ -20,5 +20,3 @@ POST        /api/user/update            controllers.ApiUserInfo.update_user_info
 
 #reg
 POST        /api/verify                 controllers.Api.verify_phone()
-
-

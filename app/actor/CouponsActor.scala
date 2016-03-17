@@ -3,7 +3,7 @@ package actor
 import javax.inject.Inject
 
 import akka.actor.Actor
-import models.{Coupons, CouponsVo}
+import models.{CouponsModel, CouponsVo}
 import play.api.Configuration
 
 /**
@@ -14,6 +14,6 @@ class CouponsActor @Inject() (configuration: Configuration) extends Actor{
 
   override def receive = {
     case coupons:CouponsVo =>
-      Coupons.updateCoupons(coupons)
+      CouponsModel.updateCoupons(coupons)
   }
 }

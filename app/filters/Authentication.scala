@@ -4,57 +4,42 @@ package filters
   * 用户token验证
   * Created by howen on 16/3/16.
   */
-import play.api._
-import play.api.mvc.Results._
 
-import play.api.libs.iteratee._
-import play.api.mvc.Security.AuthenticatedBuilder
-import scala.concurrent.Future
+import models.JsonConstModel._
+import models.{ChessPiece, Message, UserJsResult}
+import net.spy.memcached.MemcachedClient
 import play.api.Logger
-import play.api.Play.current
-import play.api.cache.Cache
+import play.api.libs.json._
+import play.api.mvc.Results._
 import play.api.mvc._
-trait Authentication {
+import utils.JsonUtil
 
-//  val AUTH_TOKEN_HEADER = "id-token"
-//
-      def username(request: RequestHeader) = request.session.get("email")
-      def onUnauthorized(request: RequestHeader) = Results.Unauthorized("")
-      def isAuthenticated(f: => String => Request[AnyContent] => Result) = {
-        Security.Authenticated(username, onUnauthorized) { user =>
-              Action(request => f(user)(request))
+import scala.concurrent._
+class Authentication(cache_client: MemcachedClient) {
+
+  class AuthenticatedRequest[A](val username: String, request: Request[A]) extends WrappedRequest[A](request)
+
+  object Authenticated extends ActionBuilder[AuthenticatedRequest]  {
+
+    val result = collection.mutable.Map[String, Object]()
+    result.put("message", Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue))
+
+    override def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] = {
+
+      request.headers.get("id-token").map { token =>
+        val id_token = cache_client.get(request.headers.get("id-token").get)
+        val m: JsResult[UserJsResult] =Json.fromJson(Json.parse(id_token.toString))(userJsResultReads)
+//        Logger.error(s"测试：$m")
+//        val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
+        if (m.asOpt.isDefined) {
+          block(new AuthenticatedRequest(m.asOpt.get.id, request))
+        } else {
+          Future.successful(Ok(JsonUtil.toJson(result)))
         }
-//
-//    def index = isAuthenticated { username => implicit request =>
-//          Ok("Hello " + username)
-//      }
-//
-//
-//  def onUnauthorized(request: RequestHeader) = Results.Unauthorized
-
-  // in a Security trait
-  object Authenticated extends AuthenticatedBuilder(req => getUserFromRequest(req))
-
-  // then in a controller
-  def index = Authenticated { implicit request =>
-    Ok("Hello " + request.user)
-  }
-
-
-  class AuthenticatedDbRequest[A](val user: User,
-                                  val conn: Connection,
-                                  request: Request[A]) extends WrappedRequest[A](request)
-
-  object Authenticated extends ActionBuilder[AuthenticatedDbRequest] {
-    def invokeBlock[A](request: Request[A], block: (AuthenticatedDbRequest[A]) => Future[Result]) = {
-      AuthenticatedBuilder(req => getUserFromRequest(req)).authenticate(request, { authRequest: AuthenticatedRequest[A, User] =>
-        DB.withConnection { conn =>
-          block(new AuthenticatedDbRequest[A](authRequest.user, conn, request))
-        }
-      })
+      } getOrElse {
+        Future.successful(Ok(JsonUtil.toJson(result)))
+      }
     }
   }
 
 }
-
-trait ScalaAuthenticatedController extends Controller with Authentication
