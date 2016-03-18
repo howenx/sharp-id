@@ -28,10 +28,14 @@ class Authentication(cache_client: MemcachedClient) {
 
       request.headers.get("id-token").map { token =>
         val id_token = cache_client.get(token)
-        val m: JsResult[UserJsResult] =Json.fromJson(Json.parse(id_token.toString))(userJsResultReads)
-        if (m.asOpt.isDefined) {
-          block(new AuthenticatedRequest(m.asOpt.get.id,token, request))
-        } else {
+        if(id_token!=null){
+          val m: JsResult[UserJsResult] =Json.fromJson(Json.parse(id_token.toString))(userJsResultReads)
+          if (m.asOpt.isDefined) {
+            block(new AuthenticatedRequest(m.asOpt.get.id,token, request))
+          } else {
+            Future.successful(Ok(JsonUtil.toJson(result)))
+          }
+        }else {
           Future.successful(Ok(JsonUtil.toJson(result)))
         }
       } getOrElse {
