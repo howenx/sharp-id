@@ -59,14 +59,10 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
 
         val format = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
         val date = format.format(new java.util.Date())
-        Logger.error("时间戳---->"+date)
 
         val send_url = url+s"/Accounts/$accountSid/Messages/templateSMS?sig="+sig(date)
 
-        Logger.error("authorization参数--->"+authorization(date))
-        Logger.error("sig--->长度:"+sig(date).length+"\n"+sig(date))
         val wsRequest: WSRequest = ws.url(send_url)
-
 
         val data = Json.obj(
           "appId" -> configuration.getString("app.id"),
@@ -77,8 +73,6 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
         val params = Json.obj(
           "templateSMS"->data
         )
-
-        Logger.error("发送参数---->\n"+params.toString())
 
         wsRequest.withHeaders("Accept" -> "application/json","Content-Type" -> "application/json;charset=utf-8","Authorization"->authorization(date)).post(params).map { response =>
           Logger.error(response.body)

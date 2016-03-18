@@ -45,7 +45,6 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         Logger.info(s"用户手机号码：$name 登陆成功")
         val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
         //设置
-
         cache_client.set(token, TOKEN_OVER_TIME, Json.stringify(Json.obj("id" -> JsNumber(user.id), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
         cache_client.set(user.id.toString, TOKEN_OVER_TIME, token)
         //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
@@ -178,7 +177,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
     *
     * @return
     */
-  def reset_password = Action { implicit request =>
+  def reset_password = Action {implicit request =>
     api_reg_form.bindFromRequest().fold(
       formWithErrors => {
         Logger.error("表单校验错误信息--->" + api_reg_form.bindFromRequest().errors.mkString)
