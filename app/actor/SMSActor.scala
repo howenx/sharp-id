@@ -1,12 +1,15 @@
 package actor
 
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 import actor.SMSType.sms_type
 import akka.actor.Actor
 import net.spy.memcached.MemcachedClient
+import org.apache.commons.codec.binary.Base64
 import play.api.libs.Codecs
-import play.api.libs.ws.WSClient
+import play.api.libs.json.Json
+import play.api.libs.ws.{WSRequest, WSClient}
 import play.api.{Configuration, Logger}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,19 +17,26 @@ import scala.concurrent.ExecutionContext.Implicits.global
 case class SMS(phone_num: String, code: String, sms_type: sms_type)
 
 /**
-  * Created by handy on 15/10/23.
-  * Daumkakao china
+  * by howen
+  * @param ws ws
+  * @param configuration configuration
+  * @param cache_client cache_client
   */
 class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_client: MemcachedClient) extends Actor {
 
   val account = configuration.getString("send_name").getOrElse("")
   val password = configuration.getString("send_password").getOrElse("")
 
+  val accountSid = configuration.getString("account.sid").get
+  val authToken = configuration.getString("auth.token").get
+  val url = configuration.getString("base.url").get+configuration.getString("soft.version").get
+  val validTime = configuration.getString("sms.valid.time").get
+
   override def receive = {
     case sms: SMS =>
       val mobile = sms.phone_num
       val code = sms.code
-      var content = s"验证码为：$code。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
+      val content = s"【韩秘美】您的验证码为$code，请于$validTime 分钟内正确输入验证码。如非本人操作，请忽略该短信。"
       val key = Codecs.md5((sms.phone_num + sms.sms_type).getBytes)
       var bl: Boolean = false
       if (cache_client.get(key) == null) {
@@ -35,7 +45,6 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
       }
       else {
         val number: Long = cache_client.get(key).toString.toLong
-        Logger.info(number.toString)
         if (number < 4) {
           cache_client.incr(key, Integer.valueOf(1))
           bl = true
@@ -45,21 +54,45 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
         }
       }
       if (bl) {
-        sms.sms_type match {
-          case SMSType.comm =>
-            content = s"验证码为：$code。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
-          case SMSType.passwd =>
-            content = s"欢迎您注册5游网，您的初始密码为$code，建议您尽快登录www.5dsy.cn修改密码！【5游网】"
-          case SMSType.resetPasswd =>
-            content = s"重置密码为：$code，请尽快登录修改密码。如非本人操作，请忽略该短信www.5dsy.cn【5游网】"
-        }
-        val send_url = s"http://sms.chanzor.com:8001/sms.aspx?action=send&account=$account&password=$password&mobile=$mobile&content=$content&sendTime="
-        Logger.error(content)
-        ws.url(send_url).get().map { response =>
-          Logger.info(response.body)
+
+        Logger.error(s"\n$content\n")
+
+        val format = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
+        val date = format.format(new java.util.Date())
+        Logger.error("时间戳---->"+date)
+
+        val send_url = url+s"/Accounts/$accountSid/Messages/templateSMS?sig="+sig(date)
+
+        Logger.error("authorization参数--->"+authorization(date))
+        Logger.error("sig--->长度:"+sig(date).length+"\n"+sig(date))
+        val wsRequest: WSRequest = ws.url(send_url)
+
+
+        val data = Json.obj(
+          "appId" -> configuration.getString("app.id"),
+          "templateId" -> configuration.getString("template.id"),
+          "to" -> mobile,
+          "param" -> s"$code,$validTime"
+        )
+        val params = Json.obj(
+          "templateSMS"->data
+        )
+
+        Logger.error("发送参数---->\n"+params.toString())
+
+        wsRequest.withHeaders("Accept" -> "application/json","Content-Type" -> "application/json;charset=utf-8","Authorization"->authorization(date)).post(params).map { response =>
+          Logger.error(response.body)
         }
       }
 
+  }
+
+  def sig(date:String):String = {
+    Codecs.md5((accountSid+authToken+date).getBytes()).toUpperCase
+  }
+
+  def authorization(date:String):String = {
+    new String(Base64.encodeBase64((accountSid+":"+date).getBytes()), StandardCharsets.UTF_8)
   }
 }
 

@@ -17,7 +17,7 @@ import utils.JsonUtil
 import scala.concurrent._
 class Authentication(cache_client: MemcachedClient) {
 
-  class AuthenticatedRequest[A](val username: String, request: Request[A]) extends WrappedRequest[A](request)
+  class AuthenticatedRequest[A](val userId: Long,val token:String, request: Request[A]) extends WrappedRequest[A](request)
 
   object Authenticated extends ActionBuilder[AuthenticatedRequest]  {
 
@@ -27,12 +27,10 @@ class Authentication(cache_client: MemcachedClient) {
     override def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] = {
 
       request.headers.get("id-token").map { token =>
-        val id_token = cache_client.get(request.headers.get("id-token").get)
+        val id_token = cache_client.get(token)
         val m: JsResult[UserJsResult] =Json.fromJson(Json.parse(id_token.toString))(userJsResultReads)
-//        Logger.error(s"测试：$m")
-//        val user_id = Json.parse(id_token.toString).\("id").asOpt[String]
         if (m.asOpt.isDefined) {
-          block(new AuthenticatedRequest(m.asOpt.get.id, request))
+          block(new AuthenticatedRequest(m.asOpt.get.id,token, request))
         } else {
           Future.successful(Ok(JsonUtil.toJson(result)))
         }

@@ -4,25 +4,25 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.Writes._
 import play.api.libs.json._
-import utils.ImageCodeService
+import utils.IdVerifyUtil
 
 /**
   * 用于JSON表单提交的校验
   * Created by howen on 16/3/17.
   */
 
-case class UserJsResult(id: String, name: String, photo: String)
+case class UserJsResult(id: Long, name: String, photo: String)
 
 object JsonConstModel {
 
   implicit lazy val userJsResultReads: Reads[UserJsResult] = (
-    (__ \ "id").read[String] and
+    (__ \ "id").read[Long] and
       (__ \ "name").read[String] and
       (__ \ "photo").read[String]
     ) (UserJsResult)
 
   implicit lazy val userJsResultWrites: Writes[UserJsResult] = (
-    (__ \ "id").write[String] and
+    (__ \ "id").write[Long] and
       (__ \ "name").write[String] and
       (__ \ "photo").write[String]
     ) (unlift(UserJsResult.unapply))
@@ -50,7 +50,7 @@ object JsonConstModel {
     */
   def id(error: String = "error.id")(implicit reads: Reads[String]) =
     Reads[String](js => reads.reads(js).flatMap { o =>
-      if (ImageCodeService.IDCardValidate(o).equals("")) JsSuccess(o) else JsError(error)
+      if (IdVerifyUtil.IDCardValidate(o).equals("")) JsSuccess(o) else JsError(error)
     })
 
   implicit lazy val addressWrites: Writes[Address] = (

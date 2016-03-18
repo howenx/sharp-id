@@ -3,8 +3,10 @@ package models
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
+import play.api.libs.Codecs
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import utils.ImageCodeUtil
 
 /**
   * 所有表单的校验和所有的Form对象
@@ -23,6 +25,8 @@ case class VerifyPhoneForm(phone: String, code: String)
 case class RefreshForm(token: String)
 
 case class RealNameForm(realName: Option[String], cardNum: Option[String], cardImgA: Option[String], cardImgB: Option[String])
+
+case class UserResultVo(id:Long,token:String,expired:Int)
 
 
 case class Message(var message: String, var code: Int)
@@ -188,4 +192,16 @@ object FormConstModel {
       (__ \ "gender").write[String] and
       (__ \ "photo_url").write[String]
     ) (unlift(User.unapply))
+
+  implicit lazy val uerResultVoReads: Reads[UserResultVo] = (
+    (__ \ "id").read[Long] and
+      (__ \ "token").read[String] and
+      (__ \ "expired").read[Int]
+    ) (UserResultVo)
+
+  implicit lazy val userResultVoWrites: Writes[UserResultVo] = (
+    (__ \ "id").write[Long] and
+      (__ \ "token").write[String] and
+      (__ \ "expired").write[Int]
+    ) (unlift(UserResultVo.unapply))
 }

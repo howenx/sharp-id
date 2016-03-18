@@ -6,7 +6,7 @@ POST        /api/send_code              controllers.Api.send_code
 POST        /api/reg                    controllers.Api.reg
 POST        /api/reset_password         controllers.Api.reset_password
 POST        /api/login_phone_num        controllers.Api.login_user_phone
-POST        /api/refresh_token          controllers.Api.refresh_token
+GET         /api/refresh_token          controllers.Api.refresh_token
 GET         /getImageCodes/:id          controllers.Api.getImageCodes(id:Integer)
 
 #UserInfo
