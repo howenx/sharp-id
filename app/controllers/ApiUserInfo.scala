@@ -335,7 +335,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
       data.fold(
         errors => {
           Logger.error("Json校验错误信息--->" + errors.toString())
-          Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
+          Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
         },
         data => {
           val user_id = request.userId
