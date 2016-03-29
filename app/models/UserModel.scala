@@ -127,6 +127,8 @@ object UserModel {
     }
   }
 
+
+
   def login(id: Long, ip: String):Int = {
     DB.withConnection() { implicit conn =>
       SQL( """ update "ID" set lastlogin_dt = CURRENT_TIMESTAMP(0) , lastlogin_ip = cidr({lastlogin_ip}) where user_id={user_id} """).on("lastlogin_ip" -> ip, "user_id" -> id).executeUpdate()
