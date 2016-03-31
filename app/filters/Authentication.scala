@@ -27,6 +27,7 @@ class Authentication(cache_client: MemcachedClient) {
     override def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] = {
 
       request.headers.get("id-token").map { token =>
+
         val id_token = cache_client.get(token)
         if(id_token!=null){
           val m: JsResult[UserJsResult] =Json.fromJson(Json.parse(id_token.toString))(userJsResultReads)

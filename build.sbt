@@ -3,7 +3,7 @@ import play.sbt.PlayScala
 
 name := """style-id"""
 
-version := "0.1.4"
+version := "0.1.5"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -14,10 +14,8 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   filters,
-  specs2 % Test,
   "com.aliyun.oss" % "aliyun-sdk-oss" % "2.0.1",
   "com.typesafe.play" %% "anorm" % "2.5.0",
-  "com.typesafe.play" % "play-mailer_2.11" % "2.4.0",
   "com.github.mumoshu" %% "play2-memcached-play24" % "0.7.0"
 
 )

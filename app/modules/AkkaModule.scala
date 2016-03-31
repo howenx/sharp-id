@@ -1,6 +1,6 @@
 package modules
 
-import actor.{CouponsActor, OssActor, SMSActor}
+import actor.{CouponsActor, OssActor, SMSActor, WechatUserInfoActor}
 import com.google.inject.AbstractModule
 import play.api.libs.concurrent.AkkaGuiceSupport
 
@@ -14,5 +14,6 @@ class AkkaModule extends AbstractModule with AkkaGuiceSupport {
     bindActor[SMSActor] ("sms")
     bindActor[OssActor] ("oss")
     bindActor[CouponsActor] ("coupons")
+    bindActor[WechatUserInfoActor]("wechatUserInfoActor")
   }
 }

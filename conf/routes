@@ -17,6 +17,6 @@ POST        /api/address/add            controllers.ApiUserInfo.insert_address
 POST        /api/user/verify            controllers.ApiUserInfo.change_real_name
 GET         /api/user/get/info          controllers.ApiUserInfo.select_user_info
 POST        /api/user/update            controllers.ApiUserInfo.update_user_info
-
+GET         /api/user/open/:openId      controllers.Api.verify_open_user(openId:String)
 #reg
 POST        /api/verify                 controllers.Api.verify_phone()

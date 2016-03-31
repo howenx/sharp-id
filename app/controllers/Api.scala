@@ -4,7 +4,7 @@ import java.io.{ByteArrayOutputStream, IOException, InputStream}
 import java.util.{Calendar, GregorianCalendar}
 import javax.inject._
 
-import actor.{SMS, SMSType}
+import actor.{SMS, SMSType, WechatUser}
 import akka.actor.ActorRef
 import filters.Authentication
 import models.FormConstModel._
@@ -23,7 +23,7 @@ import utils.SysParUtil._
   * Created by howen on 16/3/16.
   */
 @Singleton
-class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef, @Named("coupons") couponsActor: ActorRef) extends Controller {
+class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, @Named("oss") oss: ActorRef, @Named("coupons") couponsActor: ActorRef, @Named("wechatUserInfoActor") wechatUserInfoActor: ActorRef) extends Controller {
 
   val auth = new Authentication(cache_client)
 
@@ -32,23 +32,22 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
   /**
     * 登录操作
     *
-    * @param id            id
+    * @param user          UserOpen
     * @param remoteAddress remoteAddress
-    * @param name          name
-    * @param password      password
     * @return
     */
-  def login(id: Long, remoteAddress: String, name: String, password: String): String = {
-    UserModel.find_by_phone(name, password) match {
-      case Some(user) =>
-        UserModel.login(user.id, remoteAddress)
-        Logger.info(s"用户手机号码：$name 登陆成功")
+  def login(user: UserOpen, remoteAddress: String): String = {
+    UserInfoModel.queryUser(user) match {
+      //已经存在的用户登录
+      case Some(userInfo) =>
+        UserInfoModel.login(userInfo.userId.get, remoteAddress)
+        Logger.info(s"用户手机号码：${userInfo.phoneNum.get} 登陆成功")
         val token = Codecs.md5((System.currentTimeMillis + scala.util.Random.nextString(100)).getBytes())
         //设置
-        cache_client.set(token, TOKEN_OVER_TIME, Json.stringify(Json.obj("id" -> JsNumber(user.id), "name" -> JsString(user.nickname), "photo" -> JsString(user.photo_url))))
-        cache_client.set(user.id.toString, TOKEN_OVER_TIME, token)
+        cache_client.set(token, TOKEN_OVER_TIME, Json.stringify(Json.obj("id" -> JsNumber(userInfo.userId.get), "name" -> JsString(userInfo.nickname.get), "photo" -> JsString(userInfo.photoUrl.get))))
+        cache_client.set(userInfo.userId.get.toString, TOKEN_OVER_TIME, token)
         //用户一旦登录,就去更新用户将用户所有未使用的过期的优惠券置成状态"S",表示自动失效
-        couponsActor ! CouponsVo(None, Some(user.id), None, None, None, None, Some("S"), None, None, None, None)
+        couponsActor ! CouponsVo(None, Some(userInfo.userId.get), None, None, None, None, Some("S"), None, None, None, None)
         token
       case None => null
     }
@@ -74,8 +73,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
           Ok(Json.obj("message" -> Message(ChessPiece.SECURITY_ERROR.string, ChessPiece.SECURITY_ERROR.pointValue)))
         }
         else {
-          if (code_times != null && code_times.toString.toInt > 10) {
-            Logger.info(s"此用户手机号：$phone api发送验证码当天超过10次")
+          if (code_times != null && code_times.toString.toInt > SMS_TIMES) {
+            Logger.info(s"此用户手机号：$phone api发送验证码当天超过$SMS_TIMES 次")
             Ok(Json.obj("message" -> Message(ChessPiece.SEND_SMS_TOO_MANY.string, ChessPiece.SEND_SMS_TOO_MANY.pointValue)))
           } else {
             if (code_times == null) {
@@ -148,23 +147,41 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         if (cacheCode == null || !String.valueOf(cacheCode).equals(code)) {
           Ok(Json.obj("message" -> Message(ChessPiece.SMS_CODE_ERROR.string, ChessPiece.SMS_CODE_ERROR.pointValue)))
         } else {
-          UserModel.find_by_phone(phone) match {
+          var openUser: UserOpen = UserOpen(None, None, None, Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+
+          UserInfoModel.queryUser(openUser) match {
             //已经存在的用户自动登录
             case Some(userInfo) =>
               Logger.info(s"用户手机号：$phone 此用户已经注册")
               Ok(Json.obj("message" -> Message(ChessPiece.USER_EXISTS.string, ChessPiece.USER_EXISTS.pointValue)))
             case None =>
-              UserModel.insert(phone, password, request.remoteAddress) match {
-                case Some(id) =>
-                  if (id > 0) {
-                    Logger.info(s"用户手机号：$phone 注册成功")
-                    Ok(Json.obj("message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue)))
-                  }
-                  else {
-                    Ok(Json.obj("message" -> Message(ChessPiece.ERROR.string, ChessPiece.ERROR.pointValue)))
-                  }
-                case None =>
-                  Ok(Json.obj("message" -> Message(ChessPiece.ERROR.string, ChessPiece.ERROR.pointValue)))
+              if (UserInfoModel.insert(phone, password, request.remoteAddress).isDefined) {
+                Logger.info(s"用户手机号：$phone 注册成功")
+                if (data.accessToken.isDefined && data.openId.isDefined) {
+                  wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                }
+                openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+                UserInfoModel.queryUser(openUser) match {
+                  case Some(userOpen) =>
+                    val token = login(openUser, request.remoteAddress)
+                    if (token != null) {
+                      if (data.accessToken.isDefined && data.openId.isDefined) {
+                        wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                      }
+                      Ok(Json.obj(
+                        "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                        "result" -> UserResultVo(userOpen.userId.get, token, TOKEN_OVER_TIME))
+                      )
+                    } else {
+                      cache_client.set(openUser.phoneNum.orNull + "_check", 60 * 60, 1)
+                      Ok(Json.obj("message" -> Message(ChessPiece.USERNAME_OR_PASSWORD_ERROR.string, ChessPiece.USERNAME_OR_PASSWORD_ERROR.pointValue)))
+                    }
+                  case None =>
+                    Ok(Json.obj("message" -> Message(ChessPiece.NOT_REGISTERED.string, ChessPiece.NOT_REGISTERED.pointValue)))
+                }
+              }
+              else {
+                Ok(Json.obj("message" -> Message(ChessPiece.ERROR.string, ChessPiece.ERROR.pointValue)))
               }
           }
         }
@@ -173,11 +190,11 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
   }
 
   /**
-    * 重置密码
+    * 重置密码并返回token,包含微信重置密码绑定登录
     *
     * @return
     */
-  def reset_password = Action {implicit request =>
+  def reset_password = Action { implicit request =>
     api_reg_form.bindFromRequest().fold(
       formWithErrors => {
         Logger.error("表单校验错误信息--->" + api_reg_form.bindFromRequest().errors.mkString)
@@ -192,12 +209,27 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
           Ok(Json.obj("message" -> Message(ChessPiece.SMS_CODE_ERROR.string, ChessPiece.SMS_CODE_ERROR.pointValue)))
         }
         else {
-          UserModel.find_by_phone(phone) match {
-            //已经存在的用户自动登录
-            case Some(userInfo) =>
-              if (UserModel.reset_password(phone, password) > 0) {
+          var openUser: UserOpen = UserOpen(None, None, None, Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+          UserInfoModel.queryUser(openUser) match {
+            case Some(userOpen) =>
+              //已经存在的用户自动登录
+              if (UserInfoModel.reset_password(phone, password) > 0) {
                 Logger.info(s"用户手机号：$phone 重置密码成功")
-                Ok(Json.obj("message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue)))
+
+                openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+                val token = login(openUser, request.remoteAddress)
+                if (token != null) {
+                  if (data.accessToken.isDefined && data.openId.isDefined) {
+                    wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                  }
+                  Ok(Json.obj(
+                    "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                    "result" -> UserResultVo(userOpen.userId.get, token, TOKEN_OVER_TIME))
+                  )
+                } else {
+                  cache_client.set(openUser.phoneNum.orNull + "_check", 60 * 60, 1)
+                  Ok(Json.obj("message" -> Message(ChessPiece.USERNAME_OR_PASSWORD_ERROR.string, ChessPiece.USERNAME_OR_PASSWORD_ERROR.pointValue)))
+                }
               } else Ok(Json.obj("message" -> Message(ChessPiece.ERROR.string, ChessPiece.ERROR.pointValue)))
             case None =>
               Logger.info(s"用户手机号：$phone 此用户未注册")
@@ -222,7 +254,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       data => {
         val phone: String = data.phone.trim
         if (data.code.equals("-1")) {
-          UserModel.find_by_phone(phone) match {
+          val openUser: UserOpen = UserOpen(None, None, None, Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+          UserInfoModel.queryUser(openUser) match {
             //已经存在的用户自动登录
             case Some(userInfo) =>
               Logger.info(s"用户手机号：$phone 此用户已经注册")
@@ -233,7 +266,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
           }
         } else {
           if (cache_client.get(data.code.toUpperCase) != null && cache_client.get(data.code.toUpperCase).equals(data.code.toUpperCase)) {
-            UserModel.find_by_phone(phone) match {
+            val openUser: UserOpen = UserOpen(None, None, None, Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+            UserInfoModel.queryUser(openUser) match {
               case Some(userInfo) =>
                 Logger.info(s"用户手机号：$phone 此用户已经注册")
                 Ok(Json.obj("message" -> Message(ChessPiece.USER_EXISTS.string, ChessPiece.USER_EXISTS.pointValue)))
@@ -272,16 +306,20 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
         phone match {
           case phone_regex() =>
             if (verifyLocked == null) {
-              UserModel.find_by_phone(phone) match {
+              var openUser: UserOpen = UserOpen(None, None, None, Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+              UserInfoModel.queryUser(openUser) match {
                 //已经存在的用户登录
                 case Some(userInfo) =>
-                  val token = login(userInfo.id, request.remoteAddress, phone, password)
-
+                  openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+                  val token = login(openUser, request.remoteAddress)
                   if (verifyLockTimes == null) {
                     if (token != null) {
+                      if (data.accessToken.isDefined && data.openId.isDefined) {
+                        wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                      }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
-                        "result" -> UserResultVo(userInfo.id, token, TOKEN_OVER_TIME))
+                        "result" -> UserResultVo(userInfo.userId.get, token, TOKEN_OVER_TIME))
                       )
                     } else {
                       cache_client.set(phone + "_check", 60 * 60, 1)
@@ -292,9 +330,12 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     Logger.info(s"输入错误次数：$verifyLockTimes")
                     if (token != null) {
                       cache_client.delete(phone + "_check")
+                      if (data.accessToken.isDefined && data.openId.isDefined) {
+                        wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                      }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
-                        "result" -> UserResultVo(userInfo.id, token, TOKEN_OVER_TIME))
+                        "result" -> UserResultVo(userInfo.userId.get, token, TOKEN_OVER_TIME))
                       )
                     } else {
                       cache_client.set(phone + "_check", 60 * 60, verifyLockTimes.toString.toInt + 1)
@@ -307,9 +348,12 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     } else if (cache_client.get(code.toUpperCase) != null && cache_client.get(code.toUpperCase).equals(code.toUpperCase)) {
                       if (token != null) {
                         cache_client.delete(phone + "_check")
+                        if (data.accessToken.isDefined && data.openId.isDefined) {
+                          wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                        }
                         Ok(Json.obj(
                           "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
-                          "result" -> UserResultVo(userInfo.id, token, TOKEN_OVER_TIME))
+                          "result" -> UserResultVo(userInfo.userId.get, token, TOKEN_OVER_TIME))
                         )
                       } else {
                         cache_client.set(phone + "_check", 60 * 60, verifyLockTimes.toString.toInt + 1)
@@ -355,4 +399,34 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
       "result" -> UserResultVo(request.userId, newToken, TOKEN_OVER_TIME))
     )
   }
+
+
+  /**
+    * 查询此微信用户是否注册过
+    *
+    * @param openId 微信平台用户唯一识别ID
+    * @return
+    */
+  def verify_open_user(openId: String) = Action { implicit request =>
+    if (openId != "") {
+      val openUser: UserOpen = UserOpen(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, Some(openId), None, None, None, None, None)
+      UserInfoModel.queryUser(openUser) match {
+        case Some(userOpen) =>
+          Logger.info("Wechat user sign up: " + userOpen.phoneNum)
+          val token = login(openUser, request.remoteAddress)
+          if (token != null) {
+            Ok(Json.obj(
+              "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+              "result" -> UserResultVo(userOpen.userId.get, token, TOKEN_OVER_TIME))
+            )
+          } else {
+            cache_client.set(userOpen.phoneNum.orNull + "_check", 60 * 60, 1)
+            Ok(Json.obj("message" -> Message(ChessPiece.USERNAME_OR_PASSWORD_ERROR.string, ChessPiece.USERNAME_OR_PASSWORD_ERROR.pointValue)))
+          }
+        case None =>
+          Ok(Json.obj("message" -> Message(ChessPiece.NOT_REGISTERED.string, ChessPiece.NOT_REGISTERED.pointValue)))
+      }
+    } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
+  }
+
 }

@@ -3,6 +3,7 @@ package models
 import anorm.SqlParser._
 import anorm.{SQL, ~, _}
 import com.fasterxml.jackson.databind.JsonNode
+import play.Logger
 import play.api.Play.current
 import play.api.db.DB
 import play.libs.Json
@@ -11,36 +12,7 @@ import play.libs.Json
   * 用户详细信息,以及用户收货地址增删改查
   * Created by howen on 15/11/30.
   */
-case class Address(addId: Option[Long], tel: Option[String], name: Option[String], deliveryCity: Option[String], deliveryDetail: Option[String], userId: Option[Long], orDefault: Option[Int], idCardNum: Option[String], orDestroy: Option[Boolean], cityCode: Option[String])
 
-case class UserDetail(userId: Option[Long], nickname: Option[String], phoneNum: Option[String], birthday: Option[String], activeYn: Option[String], realYN: Option[String], gender: Option[String], photoUrl: Option[String], status: Option[String])
-
-case class UserOpen(
-                     userId: Option[Long], //用户ID
-                     nickname: Option[String], //用户昵称
-                     passwd: Option[String], //密码
-                     phoneNum: Option[String], //手机号
-                     gender: Option[String], //性别
-                     birthday: Option[String], //生日
-                     photoUrl: Option[String], //头像
-                     realName: Option[String], //真实姓名
-                     cardType: Option[String], //证件类型
-                     cardNum: Option[String], //证件编号
-                     cardImg: Option[String], //证件原图
-                     regIp: Option[String], //注册IP
-                     regDt: Option[String], //注册时间
-                     realYn: Option[String], //是否实名认证
-                     lastloginDt: Option[String], //最后登录时间
-                     lastloginIp: Option[String], //最后登录IP
-                     status: Option[String], //状态
-                     idType: Option[String], //用户类型
-                     openId: Option[String], //其它平台唯一识别用户ID
-                     idArea: Option[String], //用户所在区域
-                     loginTimes: Option[Long], //登录次数
-                     email: Option[String], //邮箱
-                     alterDt: Option[String], //更新时间
-                     activeYn: Option[String] //激活时间
-                   )
 
 object UserInfoModel {
 
@@ -58,45 +30,33 @@ object UserInfoModel {
     }
   }
 
-  val userInfoDetailMapping = {
-    get[Long]("user_id") ~
-      get[String]("nickname") ~
-      get[String]("gender") ~
-      get[String]("photo_url") ~
-      get[String]("birthday") ~
-      get[String]("phone_num") ~
-      get[String]("active_YN") ~
-      get[String]("real_YN") ~
-      get[String]("status") map {
-      case user_id ~ nickname ~ gender ~ photo_url ~ birthday ~ phone_num ~ active_YN ~ real_YN ~ status => UserDetail(Some(user_id), Some(nickname), Some(phone_num), Some(birthday), Some(active_YN), Some(real_YN), Some(gender), Some(photo_url), Some(status))
-    }
-  }
+
 
   val userOpenMapping = {
-    get[Long]("user_id") ~
-      get[String]("nickname") ~
-      get[String]("passwd") ~
-      get[String]("phone_num") ~
-      get[String]("gender") ~
-      get[String]("birthday") ~
-      get[String]("photo_url") ~
-      get[String]("real_name") ~
-      get[String]("card_type") ~
-      get[String]("card_num") ~
-      get[String]("card_img") ~
-      get[String]("reg_ip") ~
-      get[String]("reg_dt") ~
-      get[String]("real_YN") ~
-      get[String]("lastlogin_dt") ~
-      get[String]("lastlogin_ip") ~
-      get[String]("status") ~
-      get[String]("id_type") ~
-      get[String]("open_id") ~
-      get[String]("id_area") ~
-      get[Long]("login_times") ~
-      get[String]("email") ~
-      get[String]("alter_dt") ~
-      get[String]("active_YN") map {
+    get[Option[Long]]("user_id") ~
+      get[Option[String]]("nickname") ~
+      get[Option[String]]("passwd") ~
+      get[Option[String]]("phone_num") ~
+      get[Option[String]]("gender") ~
+      get[Option[String]]("birthday") ~
+      get[Option[String]]("photo_url") ~
+      get[Option[String]]("real_name") ~
+      get[Option[String]]("card_type") ~
+      get[Option[String]]("card_num") ~
+      get[Option[String]]("card_img") ~
+      get[Option[String]]("reg_ip") ~
+      get[Option[String]]("reg_dt") ~
+      get[Option[String]]("or_real") ~
+      get[Option[String]]("lastlogin_dt") ~
+      get[Option[String]]("lastlogin_ip") ~
+      get[Option[String]]("status") ~
+      get[Option[String]]("id_type") ~
+      get[Option[String]]("open_id") ~
+      get[Option[String]]("id_area") ~
+      get[Option[Long]]("login_times") ~
+      get[Option[String]]("email") ~
+      get[Option[String]]("alter_dt") ~
+      get[Option[String]]("or_active") map {
       case user_id ~
         nickname ~
         passwd ~
@@ -110,7 +70,7 @@ object UserInfoModel {
         card_img ~
         reg_ip ~
         reg_dt ~
-        real_YN ~
+        or_real ~
         lastlogin_dt ~
         lastlogin_ip ~
         status ~
@@ -120,39 +80,39 @@ object UserInfoModel {
         login_times ~
         email ~
         alter_dt ~
-        active_YN =>
+        or_active =>
         UserOpen(
-          Some(user_id),
-          Some(nickname),
-          Some(passwd),
-          Some(phone_num),
-          Some(gender),
-          Some(birthday),
-          Some(photo_url),
-          Some(real_name),
-          Some(card_type),
-          Some(card_num),
-          Some(card_img),
-          Some(reg_ip),
-          Some(reg_dt),
-          Some(real_YN),
-          Some(lastlogin_dt),
-          Some(lastlogin_ip),
-          Some(status),
-          Some(id_type),
-          Some(open_id),
-          Some(id_area),
-          Some(login_times),
-          Some(email),
-          Some(alter_dt),
-          Some(active_YN)
+          user_id,
+          nickname,
+          passwd,
+          phone_num,
+          gender,
+          birthday,
+          photo_url,
+          real_name,
+          card_type,
+          card_num,
+          card_img,
+          reg_ip,
+          reg_dt,
+          or_real,
+          lastlogin_dt,
+          lastlogin_ip,
+          status,
+          id_type,
+          open_id,
+          id_area,
+          login_times,
+          email,
+          alter_dt,
+          or_active
         )
     }
   }
 
-  def changeRealName(id: Long, cardNum: String, cardImg: JsonNode, realName: String, realYn: String): Int = {
+  def changeRealName(id: Long, cardNum: String, cardImg: JsonNode, realName: String, orReal: String): Int = {
     DB.withConnection() { implicit conn =>
-      SQL( """ update "ID" set real_name={realName},card_num={cardNum},card_img={cardImg}::jsonb,"real_YN"={realYn} where user_id={user_id} """).on("realName" -> realName, "cardNum" -> cardNum, "cardImg" -> Json.stringify(cardImg), "realYn" -> realYn, "user_id" -> id).executeUpdate()
+      SQL( """ update "ID" set real_name={realName},card_num={cardNum},card_img={cardImg}::jsonb,or_real={orReal} where user_id={user_id} """).on("realName" -> realName, "cardNum" -> cardNum, "cardImg" -> Json.stringify(cardImg), "or_real" -> orReal, "user_id" -> id).executeUpdate()
     }
   }
 
@@ -244,34 +204,34 @@ object UserInfoModel {
   }
 
   val sqlColumn: String = "" +
-    "user_id" +
-    "nickname" +
-    "passwd" +
-    "phone_num" +
-    "gender" +
-    "to_char(birthday,'YYYY-MM-DD') birthday" +
-    "photo_url" +
-    "real_name" +
-    "card_type" +
-    "card_num" +
-    "card_img" +
-    "reg_ip::text" +
-    "reg_dt" +
-    """"real_YN"""" +
-    "to_char(lastlogin_dt,'YYYY-MM-DD HH24:MI:SS') lastlogin_dt" +
-    "lastlogin_ip::text" +
-    "status" +
-    "id_type" +
-    "open_id" +
-    "id_area" +
-    "login_times" +
-    "email" +
-    "alter_dt" +
-    """"active_YN""""
+    "user_id," +
+    "nickname," +
+    "passwd," +
+    "phone_num," +
+    "gender," +
+    "to_char(birthday,'YYYY-MM-DD') birthday," +
+    "photo_url," +
+    "real_name," +
+    "card_type," +
+    "card_num," +
+    "card_img," +
+    "reg_ip::text," +
+    "to_char(reg_dt,'YYYY-MM-DD HH24:MI:SS') reg_dt," +
+    "or_real," +
+    "to_char(lastlogin_dt,'YYYY-MM-DD HH24:MI:SS') lastlogin_dt," +
+    "lastlogin_ip::text," +
+    "status," +
+    "id_type," +
+    "open_id," +
+    "id_area," +
+    "login_times," +
+    "email," +
+    "to_char(alter_dt,'YYYY-MM-DD HH24:MI:SS') alter_dt," +
+    "or_active"
 
-  def findByUserId(id: Long): Option[UserDetail] = {
+  def findByUserId(id: Long): Option[UserOpen] = {
     DB.withConnection() { implicit conn =>
-      SQL( """select """ + sqlColumn +""" from "ID" where user_id = {user_id}""").on("user_id" -> id).as(userInfoDetailMapping.*).headOption
+      SQL( """select """ + sqlColumn +""" from "ID" where user_id = {user_id}""").on("user_id" -> id).as(userOpenMapping.*).headOption
     }
   }
 
@@ -282,6 +242,22 @@ object UserInfoModel {
     if (user.userId.isDefined) {
       setString += """and user_id = {userId}"""
       params = params :+ NamedParameter("userId", user.userId.get)
+    }
+    if (user.phoneNum.isDefined) {
+      setString += """and phone_num = {phoneNum}"""
+      params = params :+ NamedParameter("phoneNum", user.phoneNum.get)
+    }
+    if (user.openId.isDefined) {
+      setString += """and open_id = {openId}"""
+      params = params :+ NamedParameter("openId", user.openId.get)
+    }
+    if (user.idType.isDefined) {
+      setString += """and id_type = {idType}"""
+      params = params :+ NamedParameter("idType", user.idType.get)
+    }
+    if (user.passwd.isDefined) {
+      setString +="""and passwd = user_passwd(user_id,{passwd})"""
+      params = params :+ NamedParameter("passwd", user.passwd.get)
     }
     DB.withConnection() { implicit conn =>
       SQL( """select """ + sqlColumn +""" from "ID" where """ + setString).on(params: _*).as(userOpenMapping.*).headOption
@@ -365,12 +341,13 @@ object UserInfoModel {
 
   def updateUser(user: UserOpen): Int = {
     var setString: String = "alter_dt = CURRENT_TIMESTAMP(0)"
+    var whereString: String = "1=1"
     var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq(
       NamedParameter("userId", user.userId.get)
     )
-    if (user.activeYn.isDefined) {
-      setString += """, "active_YN" = {activeYn}"""
-      params = params :+ NamedParameter("activeYn", user.activeYn.get)
+    if (user.orActive.isDefined) {
+      setString += """, "or_active" = {orActive}"""
+      params = params :+ NamedParameter("orActive", user.orActive.get)
     }
     if (user.birthday.isDefined) {
       setString += """,birthday = to_timestamp({birthday},'YYYY-MM-DD')"""
@@ -392,15 +369,16 @@ object UserInfoModel {
       setString += """,photo_url = {photoUrl}"""
       params = params :+ NamedParameter("photoUrl", user.photoUrl.get)
     }
-    if (user.realYn.isDefined) {
-      setString += ""","real_YN" = {realYN}"""
-      params = params :+ NamedParameter("realYN", user.realYn.get)
+    if (user.orReal.isDefined) {
+      setString += ""","or_real" = {orReal}"""
+      params = params :+ NamedParameter("orReal", user.orReal.get)
     }
     if (user.status.isDefined) {
       setString += """,status = {status}"""
       params = params :+ NamedParameter("status", user.status.get)
     }
     if (user.openId.isDefined) {
+      whereString += "and open_id = {openId}"
       setString += """,open_id = {openId}"""
       params = params :+ NamedParameter("openId", user.openId.get)
     }
@@ -418,20 +396,23 @@ object UserInfoModel {
     if (user.loginTimes.isDefined) {
       setString +="""COALESCE(login_times::int,0)+1"""
     }
+    if (user.userId.isDefined) {
+      whereString += "and user_id = {userId}"
+    }
 
     DB.withConnection { implicit c =>
-      SQL( """UPDATE "ID" SET """ + setString + """ WHERE user_id = {userId}""").on(params: _*).executeUpdate()
+      SQL( """UPDATE "ID" SET """ + setString + """ WHERE """ + whereString).on(params: _*).executeUpdate()
     }
   }
 
-  def updateUserDetail(userDetail: UserDetail): Int = {
+  def updateUserDetail(userDetail: UserOpen): Int = {
     var setString: String = "alter_dt = CURRENT_TIMESTAMP(0)"
     var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq(
       NamedParameter("userId", userDetail.userId.get)
     )
-    if (userDetail.activeYn.isDefined) {
-      setString += """, "active_YN" = {activeYn}"""
-      params = params :+ NamedParameter("activeYn", userDetail.activeYn.get)
+    if (userDetail.orActive.isDefined) {
+      setString += """, "or_active" = {orActive}"""
+      params = params :+ NamedParameter("orActive", userDetail.orActive.get)
     }
     if (userDetail.birthday.isDefined) {
       setString += """,birthday = to_timestamp({birthday},'YYYY-MM-DD')"""
@@ -453,9 +434,9 @@ object UserInfoModel {
       setString += """,photo_url = {photoUrl}"""
       params = params :+ NamedParameter("photoUrl", userDetail.photoUrl.get)
     }
-    if (userDetail.realYN.isDefined) {
-      setString += ""","real_YN" = {realYN}"""
-      params = params :+ NamedParameter("realYN", userDetail.realYN.get)
+    if (userDetail.orReal.isDefined) {
+      setString += ""","or_real" = {orReal}"""
+      params = params :+ NamedParameter("orReal", userDetail.orReal.get)
     }
     if (userDetail.status.isDefined) {
       setString += """,status = {status}"""
@@ -464,6 +445,28 @@ object UserInfoModel {
 
     DB.withConnection { implicit c =>
       SQL( """UPDATE "ID" SET """ + setString + """ WHERE user_id = {userId}""").on(params: _*).executeUpdate()
+    }
+  }
+
+
+  def reset_password(phone: String, passwd: String): Int = {
+    DB.withConnection() { implicit conn =>
+      SQL( """ update "ID" set  passwd = user_passwd(user_id,{passwd}) where phone_num = {phone_num} """).on("passwd" -> passwd, "phone_num" -> phone).executeUpdate()
+    }
+  }
+
+
+  def insert(phone: String, passwd: String, ip: String): Option[Long] = {
+    val nickname = "HMM "+phone.substring(0,3)+"****"+phone.substring(7,11)
+    DB.withConnection() { implicit conn =>
+      SQL( """insert into "ID" (nickname,passwd,phone_num,reg_ip,reg_dt) values ({nickname},user_passwd(currval('"ID_user_id_seq"'::regclass),{passwd}),{phone_num},cidr({reg_ip}),CURRENT_TIMESTAMP(0)) """).on("nickname" -> nickname, "passwd" -> passwd, "phone_num" -> phone, "reg_ip" -> ip).executeInsert()
+    }
+  }
+
+
+  def login(id: Long, ip: String):Int = {
+    DB.withConnection() { implicit conn =>
+      SQL( """ update "ID" set lastlogin_dt = CURRENT_TIMESTAMP(0) ,login_times =COALESCE(login_times::int,0)+1, lastlogin_ip = cidr({lastlogin_ip}) where user_id={user_id} """).on("lastlogin_ip" -> ip, "user_id" -> id).executeUpdate()
     }
   }
 }

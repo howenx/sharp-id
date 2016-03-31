@@ -3,10 +3,8 @@ package models
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
-import play.api.libs.Codecs
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import utils.ImageCodeUtil
 
 /**
   * 所有表单的校验和所有的Form对象
@@ -14,11 +12,11 @@ import utils.ImageCodeUtil
   */
 
 
-case class UserPhoneLoginForm(phone: String, password: String, code: String)
+case class UserPhoneLoginForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String])
 
 case class ApiSendCodeForm(phone: String, msg: String)
 
-case class ApiRegForm(phone: String, password: String, code: String)
+case class ApiRegForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String])
 
 case class VerifyPhoneForm(phone: String, code: String)
 
@@ -26,7 +24,7 @@ case class RefreshForm(token: String)
 
 case class RealNameForm(realName: Option[String], cardNum: Option[String], cardImgA: Option[String], cardImgB: Option[String])
 
-case class UserResultVo(id:Long,token:String,expired:Int)
+case class UserResultVo(id: Long, token: String, expired: Int)
 
 
 case class Message(var message: String, var code: Int)
@@ -42,7 +40,9 @@ object FormConstModel {
     "password" -> nonEmptyText.verifying(minLength(6), maxLength(12)).verifying("Bad password regex", {
       _.matches("""^(?![0-9]+$)(?![a-zA-Z]+$)[a-zA-Z0-9]{6,12}""")
     }),
-	"code" -> nonEmptyText
+    "code" -> nonEmptyText,
+    "accessToken" -> optional(text),
+    "openId" -> optional(text)
   )(UserPhoneLoginForm.apply)(UserPhoneLoginForm.unapply))
 
   /**
@@ -84,7 +84,9 @@ object FormConstModel {
     "password" -> nonEmptyText.verifying(minLength(6), maxLength(12)).verifying("Bad password regex", {
       _.matches("""^(?![0-9]+$)(?![a-zA-Z]+$)[a-zA-Z0-9]{6,12}""")
     }),
-    "code" -> nonEmptyText
+    "code" -> nonEmptyText,
+    "accessToken" -> optional(text),
+    "openId" -> optional(text)
   )(ApiRegForm.apply)(ApiRegForm.unapply))
 
 
@@ -112,19 +114,6 @@ object FormConstModel {
       (__ \ "code").write[Int]
     ) (unlift(Message.unapply))
 
-  implicit lazy val userReads: Reads[User] = (
-    (__ \ "id").read[Long] and
-      (__ \ "nickname").read[String] and
-      (__ \ "gender").read[String] and
-      (__ \ "photo_url").read[String]
-    ) (User)
-
-  implicit lazy val userWrites: Writes[User] = (
-    (__ \ "id").write[Long] and
-      (__ \ "nickname").write[String] and
-      (__ \ "gender").write[String] and
-      (__ \ "photo_url").write[String]
-    ) (unlift(User.unapply))
 
   implicit lazy val uerResultVoReads: Reads[UserResultVo] = (
     (__ \ "id").read[Long] and

@@ -316,13 +316,14 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
             "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
             "userInfo" -> Json.obj("name" -> JsString(user.nickname.get),
               "photo" -> JsString(configuration.getString("oss.url").getOrElse("") + user.photoUrl.get),
-              "realYn" -> JsString(user.realYN.get),
+              "orReal" -> JsString(user.orReal.get),
               "phoneNum" -> JsString(user.phoneNum.get), "gender" -> JsString(user.gender.get), "couponsCount" -> JsNumber(couponVo.size)
             )
           ))
         case None => Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
       }
   }
+
 
   /**
     * 更新用户个人信息
@@ -331,16 +332,17 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     */
   def update_user_info() = Authenticated(BodyParsers.parse.json(20 * 1024 * 1024)) {
     request =>
-      val data: JsResult[UserDetail] = request.body.validate[UserDetail]
+      val data: JsResult[UserUpdateJson] = request.body.validate[UserUpdateJson]
       data.fold(
         errors => {
           Logger.error("Json校验错误信息--->" + errors.toString())
-          Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))
+          Ok(Json.obj("message" -> Message(ChessPiece.BAD_USER_TOKEN.string, ChessPiece.BAD_USER_TOKEN.pointValue)))
         },
         data => {
+
           val user_id = request.userId
 
-          var userDetail: UserDetail = UserDetail(Some(user_id.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, data.photoUrl, data.status)
+          var userDetail: UserOpen = UserOpen(Some(user_id.toLong), data.nickname, data.passwd, data.phoneNum, data.gender, data.birthday, data.photoUrl, None, None, None, None, None, None, None, data.lastloginDt, data.lastloginIp, data.status, data.idType, data.openId, data.idArea, None, None, None, None)
 
           if (data.photoUrl.isDefined) {
             val byteA = Base64.decodeBase64(data.photoUrl.get.getBytes)
@@ -349,10 +351,11 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
             oss ! OSSIS(isa, keyA, byteA.length)
 
             Logger.info("用户更新头像:" + user_id + " ---> " + keyA)
-            userDetail = UserDetail(Some(user_id.toLong), data.nickname, data.phoneNum, data.birthday, data.activeYn, data.realYN, data.gender, Some(keyA), data.status)
+            userDetail = UserOpen(Some(user_id.toLong), data.nickname, data.passwd, data.phoneNum, data.gender, data.birthday, Some(keyA), None, None, None, None, None, None, None, data.lastloginDt, data.lastloginIp, data.status, data.idType, data.openId, data.idArea, None, None, None, None)
           }
+
           if (UserInfoModel.updateUserDetail(userDetail) >= 0) {
-            Logger.info("user update personal info: " + userDetail.userId.get)
+            Logger.info("user update personal info: " + user_id)
             Ok(Json.obj("message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue)))
           }
           else Ok(Json.obj("message" -> Message(ChessPiece.DATABASE_EXCEPTION.string, ChessPiece.DATABASE_EXCEPTION.pointValue)))

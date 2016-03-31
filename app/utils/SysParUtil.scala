@@ -20,4 +20,8 @@ object SysParUtil {
 
   val TOKEN_OVER_TIME: Integer = Play.application.configuration.getInt("token.over.time")
 
+  val WECHAT_USER_INFO:String = Play.application.configuration.getString("weixin.user.info")
+
+  val SMS_TIMES:Integer = Play.application.configuration.getInt("send.sms.times")
+
 }
