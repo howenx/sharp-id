@@ -340,15 +340,13 @@ object UserInfoModel {
   }
 
   def updateUser(user: UserOpen): Int = {
+
     var setString: String = "alter_dt = CURRENT_TIMESTAMP(0)"
     var whereString: String = "1=1"
     var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq(
       NamedParameter("userId", user.userId.get)
     )
-    if (user.orActive.isDefined) {
-      setString += """, "or_active" = {orActive}"""
-      params = params :+ NamedParameter("orActive", user.orActive.get)
-    }
+
     if (user.birthday.isDefined) {
       setString += """,birthday = to_timestamp({birthday},'YYYY-MM-DD')"""
       params = params :+ NamedParameter("birthday", user.birthday.get)
@@ -369,16 +367,13 @@ object UserInfoModel {
       setString += """,photo_url = {photoUrl}"""
       params = params :+ NamedParameter("photoUrl", user.photoUrl.get)
     }
-    if (user.orReal.isDefined) {
-      setString += ""","or_real" = {orReal}"""
-      params = params :+ NamedParameter("orReal", user.orReal.get)
-    }
+
     if (user.status.isDefined) {
       setString += """,status = {status}"""
       params = params :+ NamedParameter("status", user.status.get)
     }
+
     if (user.openId.isDefined) {
-      whereString += "and open_id = {openId}"
       setString += """,open_id = {openId}"""
       params = params :+ NamedParameter("openId", user.openId.get)
     }
@@ -400,7 +395,7 @@ object UserInfoModel {
       whereString += "and user_id = {userId}"
     }
 
-    DB.withConnection { implicit c =>
+    DB.withConnection { implicit conn =>
       SQL( """UPDATE "ID" SET """ + setString + """ WHERE """ + whereString).on(params: _*).executeUpdate()
     }
   }
@@ -411,7 +406,7 @@ object UserInfoModel {
       NamedParameter("userId", userDetail.userId.get)
     )
     if (userDetail.orActive.isDefined) {
-      setString += """, "or_active" = {orActive}"""
+      setString += """, or_active = {orActive}"""
       params = params :+ NamedParameter("orActive", userDetail.orActive.get)
     }
     if (userDetail.birthday.isDefined) {
@@ -443,8 +438,8 @@ object UserInfoModel {
       params = params :+ NamedParameter("status", userDetail.status.get)
     }
 
-    DB.withConnection { implicit c =>
-      SQL( """UPDATE "ID" SET """ + setString + """ WHERE user_id = {userId}""").on(params: _*).executeUpdate()
+    DB.withConnection { implicit conn =>
+      SQL( """ update "ID" set """ + setString + """ WHERE user_id = {userId}""").on(params: _*).executeUpdate()
     }
   }
 

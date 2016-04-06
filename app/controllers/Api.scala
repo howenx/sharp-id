@@ -157,16 +157,14 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
             case None =>
               if (UserInfoModel.insert(phone, password, request.remoteAddress).isDefined) {
                 Logger.info(s"用户手机号：$phone 注册成功")
-                if (data.accessToken.isDefined && data.openId.isDefined) {
-                  wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
-                }
+
                 openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
                 UserInfoModel.queryUser(openUser) match {
                   case Some(userOpen) =>
                     val token = login(openUser, request.remoteAddress)
                     if (token != null) {
                       if (data.accessToken.isDefined && data.openId.isDefined) {
-                        wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                        wechatUserInfoActor ! WechatUser(userOpen.userId.get,data.accessToken.get, data.openId.get)
                       }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -220,7 +218,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 val token = login(openUser, request.remoteAddress)
                 if (token != null) {
                   if (data.accessToken.isDefined && data.openId.isDefined) {
-                    wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                    wechatUserInfoActor ! WechatUser(userOpen.userId.get,data.accessToken.get, data.openId.get)
                   }
                   Ok(Json.obj(
                     "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -312,10 +310,11 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 case Some(userInfo) =>
                   openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
                   val token = login(openUser, request.remoteAddress)
+
                   if (verifyLockTimes == null) {
                     if (token != null) {
                       if (data.accessToken.isDefined && data.openId.isDefined) {
-                        wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                        wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
                       }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -331,7 +330,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     if (token != null) {
                       cache_client.delete(phone + "_check")
                       if (data.accessToken.isDefined && data.openId.isDefined) {
-                        wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                        wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
                       }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -349,7 +348,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                       if (token != null) {
                         cache_client.delete(phone + "_check")
                         if (data.accessToken.isDefined && data.openId.isDefined) {
-                          wechatUserInfoActor ! WechatUser(data.accessToken.get, data.openId.get)
+                          wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
                         }
                         Ok(Json.obj(
                           "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
