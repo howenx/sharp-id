@@ -3,7 +3,7 @@ import play.sbt.PlayScala
 
 name := """style-id"""
 
-version := "0.1.6"
+version := "0.1.7"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -24,8 +24,11 @@ libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.
 libraryDependencies += "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.3"
 libraryDependencies += "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.6.3"
 libraryDependencies += "org.postgresql" % "postgresql" % "9.4-1206-jdbc41"
+libraryDependencies += "com.squareup.okhttp" % "okhttp" % "2.7.5"
+
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
 
 
 // Play provides two styles of routers, one expects its actions to be injected, the
