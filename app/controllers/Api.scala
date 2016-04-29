@@ -163,7 +163,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                   case Some(userOpen) =>
                     val token = login(openUser, request.remoteAddress)
                     if (token != null) {
-                      if (data.accessToken.isDefined && data.openId.isDefined) {
+                      if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
                         wechatUserInfoActor ! WechatUser(userOpen.userId.get,data.accessToken.get, data.openId.get)
                       }
                       Ok(Json.obj(
@@ -217,7 +217,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
                 val token = login(openUser, request.remoteAddress)
                 if (token != null) {
-                  if (data.accessToken.isDefined && data.openId.isDefined) {
+                  if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
                     wechatUserInfoActor ! WechatUser(userOpen.userId.get,data.accessToken.get, data.openId.get)
                   }
                   Ok(Json.obj(
@@ -313,7 +313,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
 
                   if (verifyLockTimes == null) {
                     if (token != null) {
-                      if (data.accessToken.isDefined && data.openId.isDefined) {
+                      if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
                         wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
                       }
                       Ok(Json.obj(
@@ -329,7 +329,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     Logger.info(s"输入错误次数：$verifyLockTimes")
                     if (token != null) {
                       cache_client.delete(phone + "_check")
-                      if (data.accessToken.isDefined && data.openId.isDefined) {
+                      if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
                         wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
                       }
                       Ok(Json.obj(

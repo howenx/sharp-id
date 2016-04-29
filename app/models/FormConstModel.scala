@@ -12,11 +12,11 @@ import play.api.libs.json._
   */
 
 
-case class UserPhoneLoginForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String])
+case class UserPhoneLoginForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String],idType:Option[String])
 
 case class ApiSendCodeForm(phone: String, msg: String)
 
-case class ApiRegForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String])
+case class ApiRegForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String],idType:Option[String])
 
 case class VerifyPhoneForm(phone: String, code: String)
 
@@ -42,7 +42,8 @@ object FormConstModel {
     }),
     "code" -> nonEmptyText,
     "accessToken" -> optional(text),
-    "openId" -> optional(text)
+    "openId" -> optional(text),
+    "idType"->optional(text)
   )(UserPhoneLoginForm.apply)(UserPhoneLoginForm.unapply))
 
   /**
@@ -86,7 +87,8 @@ object FormConstModel {
     }),
     "code" -> nonEmptyText,
     "accessToken" -> optional(text),
-    "openId" -> optional(text)
+    "openId" -> optional(text),
+    "idType"->optional(text)
   )(ApiRegForm.apply)(ApiRegForm.unapply))
 
 
