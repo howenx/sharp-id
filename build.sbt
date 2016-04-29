@@ -3,7 +3,7 @@ import play.sbt.PlayScala
 
 name := """style-id"""
 
-version := "0.1.8"
+version := "0.1.9"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
@@ -34,6 +34,8 @@ libraryDependencies += "com.typesafe.akka" % "akka-slf4j_2.11" % "2.4.1" withSou
 
 libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.4.1" withSources() withJavadoc()
 
+libraryDependencies += "redis.clients" % "jedis" % "2.8.1"
+
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
@@ -41,7 +43,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 // Play provides two styles of routers, one expects its actions to be injected, the
 // other, legacy style, accesses its actions statically.
-scalacOptions ++= Seq("-unchecked","-deprecation","-feature")
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 javacOptions += "-Xlint:unchecked"
 
 routesGenerator := InjectedRoutesGenerator
