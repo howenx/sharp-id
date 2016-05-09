@@ -36,7 +36,4 @@ object Global extends GlobalSettings {
     ex.printStackTrace()
     Future.successful(NotFound(Json.obj("message" -> Message(ChessPiece.FAILURE_REQUEST_ERROR.string, ChessPiece.FAILURE_REQUEST_ERROR.pointValue))))
   }
-//  override def onRequestReceived(request: RequestHeader): (RequestHeader, Handler) = {
-//    Future.successful(NotFound(Json.obj("message" -> Message(ChessPiece.FAILURE_BAD_REQUEST.string, ChessPiece.FAILURE_BAD_REQUEST.pointValue))))
-//  }
 }
