@@ -3,6 +3,7 @@ package actor;
 import akka.actor.AbstractActor;
 import akka.japi.pf.ReceiveBuilder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import play.Logger;
 import play.libs.Json;
 import redis.clients.jedis.Jedis;
@@ -19,12 +20,14 @@ public class MnsActor extends AbstractActor {
     @Inject
     public MnsActor(Jedis jedis) {
         receive(ReceiveBuilder.match(Object.class, event -> {
-
-            if (event instanceof ILoggingEvent) {
-                ((ILoggingEvent) event).getMDCPropertyMap().put("projectId", "style-id");
-//                System.out.println("日志Json格式---->" + Json.toJson(event).toString());
-                jedis.publish(SysParUtil.REDIS_CHANNEL(), Json.toJson(event).toString());
+            try {
+                if (event instanceof ILoggingEvent) {
+                    ((ILoggingEvent) event).getMDCPropertyMap().put("projectId", "style-id");
+                    jedis.publish(SysParUtil.REDIS_CHANNEL(), Json.mapper().configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false).valueToTree(event).toString());
+                }
+            } catch (Exception ignored) {
             }
+
         }).matchAny(s -> {
             Logger.error("MnsActor received messages not matched: {}", s.toString());
             unhandled(s);
