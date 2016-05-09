@@ -3,6 +3,7 @@ package controllers
 import java.io.ByteArrayInputStream
 import javax.inject.{Inject, Named}
 
+import util.JsonUtil
 import actor.OSSIS
 import akka.actor.ActorRef
 import filters.Authentication
@@ -13,10 +14,9 @@ import net.spy.memcached.MemcachedClient
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import play.api.libs.json._
+import play.api.libs.json.{util, _}
 import play.api.mvc.{BodyParsers, Controller}
 import play.api.{Configuration, Logger}
-import utils.JsonUtil
 
 import scala.language.postfixOps
 

@@ -2,8 +2,8 @@ package modules;
 
 import com.google.inject.AbstractModule;
 import redis.clients.jedis.Jedis;
-import utils.LogUtil;
-import utils.RedisPool;
+import util.LogUtil;
+import util.RedisPool;
 
 
 /**

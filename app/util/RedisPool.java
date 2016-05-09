@@ -1,4 +1,4 @@
-package utils;
+package util;
 
 import com.typesafe.config.ConfigFactory;
 import redis.clients.jedis.Jedis;

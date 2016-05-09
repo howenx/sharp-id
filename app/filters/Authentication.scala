@@ -4,14 +4,13 @@ package filters
   * 用户token验证
   * Created by howen on 16/3/16.
   */
-
+import util.JsonUtil
 import models.JsonConstModel._
 import models.{ChessPiece, Message, UserJsResult}
 import net.spy.memcached.MemcachedClient
-import play.api.libs.json._
+import play.api.libs.json.{util, _}
 import play.api.mvc.Results._
 import play.api.mvc._
-import utils.JsonUtil
 
 import scala.concurrent._
 

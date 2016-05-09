@@ -9,7 +9,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
-import utils.SysParUtil
+import util.SysParUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

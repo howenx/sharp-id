@@ -1,4 +1,4 @@
-package utils;
+package util;
 
 import akka.actor.ActorRef;
 import ch.qos.logback.classic.spi.ILoggingEvent;

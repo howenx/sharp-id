@@ -3,7 +3,6 @@ package models
 import anorm.SqlParser._
 import anorm.{SQL, ~, _}
 import com.fasterxml.jackson.databind.JsonNode
-import play.Logger
 import play.api.Play.current
 import play.api.db.DB
 import play.libs.Json

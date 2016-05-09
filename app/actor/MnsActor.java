@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import play.Logger;
 import play.libs.Json;
 import redis.clients.jedis.Jedis;
-import utils.SysParUtil;
+import util.SysParUtil;
 
 import javax.inject.Inject;
 

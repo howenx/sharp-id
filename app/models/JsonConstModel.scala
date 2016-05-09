@@ -1,10 +1,11 @@
 package models
 
+import util.IdVerifyUtil
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.Writes._
-import play.api.libs.json._
-import utils.IdVerifyUtil
+import play.api.libs.json.{util, _}
+
 
 /**
   * 用于JSON表单提交的校验

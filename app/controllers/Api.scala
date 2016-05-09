@@ -4,6 +4,9 @@ import java.io.{ByteArrayOutputStream, IOException, InputStream}
 import java.util.{Calendar, GregorianCalendar}
 import javax.inject._
 
+import util.ImageCodeUtil
+import util.SysParUtil._
+
 import actor.{SMS, SMSType, WechatUser}
 import akka.actor.ActorRef
 import filters.Authentication
@@ -13,10 +16,8 @@ import net.spy.memcached.MemcachedClient
 import play.api.Logger
 import play.api.libs.Codecs
 import play.api.libs.iteratee.Enumerator
-import play.api.libs.json._
+import play.api.libs.json.{util, _}
 import play.api.mvc._
-import utils.ImageCodeUtil
-import utils.SysParUtil._
 
 /**
   * 所有用户登录注册相关
