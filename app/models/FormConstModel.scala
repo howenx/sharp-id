@@ -135,9 +135,11 @@ object ChessPiece extends Enumeration {
   val SUCCESS = ChessPieceVal("成功", 200)
   val FAILURE = ChessPieceVal("失败", 400)
 
-  val FAILURE_REQUEST_ERROR = ChessPieceVal("失败", 441)
-  val FAILURE_REQUEST_HANDLER_NOT_FOUND = ChessPieceVal("失败", 442)
-  val FAILURE_BAD_REQUEST = ChessPieceVal("失败", 443)
+  val FAILURE_REQUEST_ERROR = ChessPieceVal("请求出错", 441)
+  val FAILURE_REQUEST_HANDLER_NOT_FOUND = ChessPieceVal("请求未找到", 442)
+  val FAILURE_BAD_REQUEST = ChessPieceVal("非法请求", 443)
+
+
 
   val ERROR = ChessPieceVal("内部发生错误", 1001)
   val SERVER_EXCEPTION = ChessPieceVal("服务器异常", 1002)
