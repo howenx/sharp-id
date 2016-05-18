@@ -63,7 +63,7 @@ class WechatUserInfoActor @Inject()(@Named("oss") oss: ActorRef, ws: WSClient, c
         })
       }
       val idThree: IdThree = IdThree(None, Some(wechatUser.openId), Some(wechatUser.idType), Some(wechatUser.userId), Some(wechatUser.unionId))
-      if (UserInfoModel.id_three_insert(idThree) > 0) {
+      if (UserInfoModel.id_three_insert(idThree).isDefined) {
         Logger.info("Id three insert success : " + idThree.userId.get)
       } else {
         Logger.info("Id three insert error : " + idThree.userId.get)

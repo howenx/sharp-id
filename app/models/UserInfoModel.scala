@@ -484,7 +484,7 @@ object UserInfoModel {
     }
   }
 
-  def id_three_insert(idThree: IdThree): Int = {
+  def id_three_insert(idThree: IdThree): Option[Long] = {
     var columnString: String = "open_id"
     var valueString: String = "{openId}"
     var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq()
