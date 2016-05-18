@@ -12,11 +12,11 @@ import play.api.libs.json._
   */
 
 
-case class UserPhoneLoginForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String],idType:Option[String])
+case class UserPhoneLoginForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String], idType: Option[String], unionId: Option[String])
 
 case class ApiSendCodeForm(phone: String, msg: String)
 
-case class ApiRegForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String],idType:Option[String])
+case class ApiRegForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String], idType: Option[String], unionId: Option[String])
 
 case class VerifyPhoneForm(phone: String, code: String)
 
@@ -43,7 +43,8 @@ object FormConstModel {
     "code" -> nonEmptyText,
     "accessToken" -> optional(text),
     "openId" -> optional(text),
-    "idType"->optional(text)
+    "idType" -> optional(text),
+    "unionId" -> optional(text)
   )(UserPhoneLoginForm.apply)(UserPhoneLoginForm.unapply))
 
   /**
@@ -88,7 +89,8 @@ object FormConstModel {
     "code" -> nonEmptyText,
     "accessToken" -> optional(text),
     "openId" -> optional(text),
-    "idType"->optional(text)
+    "idType" -> optional(text),
+    "unionId" -> optional(text)
   )(ApiRegForm.apply)(ApiRegForm.unapply))
 
 
@@ -138,7 +140,6 @@ object ChessPiece extends Enumeration {
   val FAILURE_REQUEST_ERROR = ChessPieceVal("请求出错", 441)
   val FAILURE_REQUEST_HANDLER_NOT_FOUND = ChessPieceVal("请求未找到", 442)
   val FAILURE_BAD_REQUEST = ChessPieceVal("非法请求", 443)
-
 
 
   val ERROR = ChessPieceVal("内部发生错误", 1001)

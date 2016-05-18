@@ -1,10 +1,10 @@
 package models
 
-import util.IdVerifyUtil
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads._
 import play.api.libs.json.Writes._
-import play.api.libs.json.{util, _}
+import util.IdVerifyUtil
+import play.api.libs.json._
 
 
 /**
@@ -45,20 +45,28 @@ case class UserOpen(
                    )
 
 case class UserUpdateJson(
-                       userId: Option[Long], //用户ID
-                       nickname: Option[String], //用户昵称
-                       passwd: Option[String], //密码
-                       phoneNum: Option[String], //手机号
-                       gender: Option[String], //性别
-                       birthday: Option[String], //生日
-                       photoUrl: Option[String], //头像
-                       lastloginDt: Option[String], //最后登录时间
-                       lastloginIp: Option[String], //最后登录IP
-                       status: Option[String], //状态
-                       idType: Option[String], //用户类型
-                       openId: Option[String], //其它平台唯一识别用户ID
-                       idArea: Option[String] //用户所在区域
-                     )
+                           userId: Option[Long], //用户ID
+                           nickname: Option[String], //用户昵称
+                           passwd: Option[String], //密码
+                           phoneNum: Option[String], //手机号
+                           gender: Option[String], //性别
+                           birthday: Option[String], //生日
+                           photoUrl: Option[String], //头像
+                           lastloginDt: Option[String], //最后登录时间
+                           lastloginIp: Option[String], //最后登录IP
+                           status: Option[String], //状态
+                           idType: Option[String], //用户类型
+                           openId: Option[String], //其它平台唯一识别用户ID
+                           idArea: Option[String] //用户所在区域
+                         )
+
+case class IdThree(
+                    id: Option[Long],
+                    openId: Option[String],
+                    idType: Option[String],
+                    userId: Option[Long],
+                    unionId: Option[String]
+                  )
 
 object JsonConstModel {
 
@@ -87,6 +95,21 @@ object JsonConstModel {
       (__ \ "photo").write[String]
     ) (unlift(UserJsResult.unapply))
 
+  implicit lazy val idThreeReads: Reads[IdThree] = (
+    (__ \ "id").readNullable[Long] and
+      (__ \ "openId").readNullable[String] and
+      (__ \ "idType").readNullable[String] and
+      (__ \ "userId").readNullable[Long] and
+      (__ \ "unionId").readNullable[String]
+    ) (IdThree)
+
+  implicit lazy val idThreeWrites: Writes[IdThree] = (
+    (__ \ "id").writeNullable[Long] and
+      (__ \ "openId").writeNullable[String] and
+      (__ \ "idType").writeNullable[String] and
+      (__ \ "userId").writeNullable[Long] and
+      (__ \ "unionId").writeNullable[String]
+    ) (unlift(IdThree.unapply))
 
   implicit lazy val addressReads: Reads[Address] = (
     (__ \ "addId").readNullable[Long] and

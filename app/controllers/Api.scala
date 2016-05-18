@@ -4,9 +4,6 @@ import java.io.{ByteArrayOutputStream, IOException, InputStream}
 import java.util.{Calendar, GregorianCalendar}
 import javax.inject._
 
-import util.ImageCodeUtil
-import util.SysParUtil._
-
 import actor.{SMS, SMSType, WechatUser}
 import akka.actor.ActorRef
 import filters.Authentication
@@ -16,7 +13,9 @@ import net.spy.memcached.MemcachedClient
 import play.api.Logger
 import play.api.libs.Codecs
 import play.api.libs.iteratee.Enumerator
-import play.api.libs.json.{util, _}
+import util.ImageCodeUtil
+import util.SysParUtil._
+import play.api.libs.json._
 import play.api.mvc._
 
 /**
@@ -130,7 +129,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
   }
 
   /**
-    * 用户注册
+    * 用户注册,包含绑定三方登录账号注册
     *
     * @return
     */
@@ -164,8 +163,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                   case Some(userOpen) =>
                     val token = login(openUser, request.remoteAddress)
                     if (token != null) {
-                      if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
-                        wechatUserInfoActor ! WechatUser(userOpen.userId.get,data.accessToken.get, data.openId.get)
+                      if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A") && data.openId.isDefined) {
+                        wechatUserInfoActor ! WechatUser(userOpen.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                       }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -218,8 +217,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
                 val token = login(openUser, request.remoteAddress)
                 if (token != null) {
-                  if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
-                    wechatUserInfoActor ! WechatUser(userOpen.userId.get,data.accessToken.get, data.openId.get)
+                  if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A") && data.openId.isDefined) {
+                    wechatUserInfoActor ! WechatUser(userOpen.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                   }
                   Ok(Json.obj(
                     "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -283,7 +282,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
   }
 
   /**
-    * 用户手机登录
+    * 用户手机登录以及三方登录绑定手机号
     *
     * @return
     */
@@ -314,8 +313,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
 
                   if (verifyLockTimes == null) {
                     if (token != null) {
-                      if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
-                        wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
+                      if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A") && data.openId.isDefined) {
+                        wechatUserInfoActor ! WechatUser(userInfo.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                       }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -330,8 +329,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     Logger.info(s"输入错误次数：$verifyLockTimes")
                     if (token != null) {
                       cache_client.delete(phone + "_check")
-                      if (data.idType.isDefined && data.idType.get.equals("W") && data.accessToken.isDefined && data.openId.isDefined) {
-                        wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
+                      if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A") && data.openId.isDefined) {
+                        wechatUserInfoActor ! WechatUser(userInfo.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                       }
                       Ok(Json.obj(
                         "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -348,8 +347,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     } else if (cache_client.get(code.toUpperCase) != null && cache_client.get(code.toUpperCase).equals(code.toUpperCase)) {
                       if (token != null) {
                         cache_client.delete(phone + "_check")
-                        if (data.accessToken.isDefined && data.openId.isDefined) {
-                          wechatUserInfoActor ! WechatUser(userInfo.userId.get,data.accessToken.get, data.openId.get)
+                        if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A") && data.openId.isDefined) {
+                          wechatUserInfoActor ! WechatUser(userInfo.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                         }
                         Ok(Json.obj(
                           "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
@@ -407,12 +406,13 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
     * @param openId 微信平台用户唯一识别ID
     * @return
     */
-  def verify_open_user(openId: String) = Action { implicit request =>
-    if (openId != "") {
-      val openUser: UserOpen = UserOpen(None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, Some(openId), None, None, None, None, None)
-      UserInfoModel.queryUser(openUser) match {
+  def verify_open_user(openId: String, idType: String, unionId: String) = Action { implicit request =>
+    if (openId != "" && idType != null && idType.matches("W|WO|A|Q")) {
+      val idThree: IdThree = IdThree(None, Some(openId), Some(idType), None, Some(unionId))
+      UserInfoModel.id_three_query(idThree) match {
         case Some(userOpen) =>
-          Logger.info("Wechat user sign up: " + userOpen.phoneNum)
+          val openUser: UserOpen = UserOpen(userOpen.userId, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+          Logger.info("Wechat user sign up: " + userOpen.userId)
           val token = login(openUser, request.remoteAddress)
           if (token != null) {
             Ok(Json.obj(
@@ -420,10 +420,30 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
               "result" -> UserResultVo(userOpen.userId.get, token, TOKEN_OVER_TIME))
             )
           } else {
-            cache_client.set(userOpen.phoneNum.orNull + "_check", 60 * 60, 1)
             Ok(Json.obj("message" -> Message(ChessPiece.USERNAME_OR_PASSWORD_ERROR.string, ChessPiece.USERNAME_OR_PASSWORD_ERROR.pointValue)))
           }
         case None =>
+          if (unionId != null) {
+            var idThree: IdThree = IdThree(None, None, None, None, Some(unionId))
+            UserInfoModel.id_three_query(idThree) match {
+              case Some(userOpen) =>
+                val openUser: UserOpen = UserOpen(userOpen.userId, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+                Logger.info("Wechat user sign up: " + userOpen.userId)
+                val token = login(openUser, request.remoteAddress)
+                if (token != null) {
+                  idThree = IdThree(None, Some(openId), Some(idType), userOpen.userId, Some(unionId))
+                  UserInfoModel.id_three_insert(idThree)
+                  Ok(Json.obj(
+                    "message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue),
+                    "result" -> UserResultVo(userOpen.userId.get, token, TOKEN_OVER_TIME))
+                  )
+                } else {
+                  Ok(Json.obj("message" -> Message(ChessPiece.USERNAME_OR_PASSWORD_ERROR.string, ChessPiece.USERNAME_OR_PASSWORD_ERROR.pointValue)))
+                }
+              case None =>
+                Ok(Json.obj("message" -> Message(ChessPiece.NOT_REGISTERED.string, ChessPiece.NOT_REGISTERED.pointValue)))
+            }
+          }
           Ok(Json.obj("message" -> Message(ChessPiece.NOT_REGISTERED.string, ChessPiece.NOT_REGISTERED.pointValue)))
       }
     } else Ok(Json.obj("message" -> Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue)))

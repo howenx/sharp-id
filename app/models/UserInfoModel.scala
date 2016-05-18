@@ -29,7 +29,20 @@ object UserInfoModel {
     }
   }
 
-
+  val idThreeMapping = {
+    get[Option[Long]]("id") ~
+      get[Option[String]]("open_id") ~
+      get[Option[String]]("id_type") ~
+      get[Option[Long]]("user_id") ~
+      get[Option[String]]("union_id") map {
+      case id ~
+        open_id ~
+        id_type ~
+        user_id ~
+        union_id =>
+        IdThree(id, open_id, id_type, user_id, union_id)
+    }
+  }
 
   val userOpenMapping = {
     get[Option[Long]]("user_id") ~
@@ -201,6 +214,13 @@ object UserInfoModel {
         """ insert into  id_address(user_id,tel, "name",delivery_city,delivery_detail,id_card_num,or_default,create_at)values({userId},{tel},{name},{deliveryCity}::jsonb,{deliveryDetail},{idCardNum},{orDefault},CURRENT_TIMESTAMP(0) )""").on(params: _*).executeInsert()
     }
   }
+
+  val idThreeSqlColumn: String = "" +
+    "id," +
+    "open_id," +
+    "id_type," +
+    "user_id," +
+    "union_id"
 
   val sqlColumn: String = "" +
     "user_id," +
@@ -451,16 +471,75 @@ object UserInfoModel {
 
 
   def insert(phone: String, passwd: String, ip: String): Option[Long] = {
-    val nickname = "HMM "+phone.substring(0,3)+"****"+phone.substring(7,11)
+    val nickname = "HMM " + phone.substring(0, 3) + "****" + phone.substring(7, 11)
     DB.withConnection() { implicit conn =>
       SQL( """insert into "ID" (nickname,passwd,phone_num,reg_ip,reg_dt) values ({nickname},user_passwd(currval('"ID_user_id_seq"'::regclass),{passwd}),{phone_num},cidr({reg_ip}),CURRENT_TIMESTAMP(0)) """).on("nickname" -> nickname, "passwd" -> passwd, "phone_num" -> phone, "reg_ip" -> ip).executeInsert()
     }
   }
 
 
-  def login(id: Long, ip: String):Int = {
+  def login(id: Long, ip: String): Int = {
     DB.withConnection() { implicit conn =>
       SQL( """ update "ID" set lastlogin_dt = CURRENT_TIMESTAMP(0) ,login_times =COALESCE(login_times::int,0)+1, lastlogin_ip = cidr({lastlogin_ip}) where user_id={user_id} """).on("lastlogin_ip" -> ip, "user_id" -> id).executeUpdate()
+    }
+  }
+
+  def id_three_insert(idThree: IdThree): Int = {
+    var columnString: String = "open_id"
+    var valueString: String = "{openId}"
+    var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq()
+    if (idThree.openId.isDefined) {
+      params = params :+ NamedParameter("openId", idThree.openId.get)
+    }
+    if (idThree.userId.isDefined) {
+      columnString += ",user_id"
+      valueString += ",{userId}"
+      params = params :+ NamedParameter("userId", idThree.userId.get)
+    }
+
+    if (idThree.idType.isDefined) {
+      columnString += ",id_type"
+      valueString += ",{idType}"
+      params = params :+ NamedParameter("idType", idThree.idType.get)
+    }
+
+    if (idThree.unionId.isDefined) {
+      columnString += ",union_id"
+      valueString += ",{unionId}"
+      params = params :+ NamedParameter("unionId", idThree.unionId.get)
+    }
+
+    DB.withConnection() { implicit conn =>
+      SQL( """insert into id_three (""" + columnString +""") values (""" + valueString +""") """).on(params: _*).executeInsert()
+    }
+  }
+
+  def id_three_query(idThree: IdThree): Option[IdThree] = {
+    var setString: String = "1 = 1"
+    var params: collection.mutable.Seq[NamedParameter] = collection.mutable.Seq()
+    if (idThree.userId.isDefined) {
+      setString += """and user_id = {userId}"""
+      params = params :+ NamedParameter("userId", idThree.userId.get)
+    }
+    if (idThree.id.isDefined) {
+      setString += """and id = {id}"""
+      params = params :+ NamedParameter("id", idThree.id.get)
+    }
+    if (idThree.openId.isDefined) {
+      setString += """and open_id = {openId}"""
+      params = params :+ NamedParameter("openId", idThree.openId.get)
+    }
+    if (idThree.unionId.isDefined) {
+      setString += """and union_id = {unionId}"""
+      params = params :+ NamedParameter("unionId", idThree.unionId.get)
+    }
+    if (idThree.idType.isDefined) {
+      setString += """and id_type = {idType}"""
+      params = params :+ NamedParameter("idType", idThree.idType.get)
+    }
+
+    DB.withConnection() { implicit conn =>
+      SQL( """select """ + idThreeSqlColumn +""" from id_three where """ + setString).on(params: _*).as(idThreeMapping.*).headOption
     }
   }
 }
