@@ -1,5 +1,6 @@
 package filters
 
+import com.google.common.base.Throwables
 import models.{ChessPiece, Message}
 import play.api._
 import play.api.libs.functional.syntax._
@@ -33,7 +34,7 @@ object Global extends GlobalSettings {
 
   override def onError(request: RequestHeader, ex: Throwable) = {
     Logger.error("请求出错: " + request.host + request.uri + " " + request.remoteAddress + " " + request.headers("User-Agent"))
-    ex.printStackTrace()
+    Logger.error(Throwables.getStackTraceAsString(ex))
     Future.successful(NotFound(Json.obj("message" -> Message(ChessPiece.FAILURE_REQUEST_ERROR.string, ChessPiece.FAILURE_REQUEST_ERROR.pointValue))))
   }
 }
