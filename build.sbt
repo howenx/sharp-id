@@ -3,7 +3,7 @@ import play.sbt.PlayScala
 
 name := """style-id"""
 
-version := "0.2.3"
+version := "0.2.4"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 

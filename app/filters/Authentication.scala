@@ -4,6 +4,7 @@ package filters
   * 用户token验证
   * Created by howen on 16/3/16.
   */
+
 import util.JsonUtil
 import models.JsonConstModel._
 import models.{ChessPiece, Message, UserJsResult}
@@ -25,7 +26,7 @@ class Authentication(cache_client: MemcachedClient) {
 
     override def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] = {
 
-      if (request.headers.get("User-Agent").contains("Alibaba.Security")) {
+      if (request.headers == null || request.headers.get("User-Agent").isEmpty || request.headers.get("User-Agent").get.contains("Alibaba.Security")) {
         Future.successful(Ok(JsonUtil.toJson(result)))
       } else {
         request.headers.get("id-token").map { token =>

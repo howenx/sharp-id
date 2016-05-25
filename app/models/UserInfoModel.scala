@@ -3,6 +3,7 @@ package models
 import anorm.SqlParser._
 import anorm.{SQL, ~, _}
 import com.fasterxml.jackson.databind.JsonNode
+import play.api.Logger
 import play.api.Play.current
 import play.api.db.DB
 import play.libs.Json
@@ -525,15 +526,15 @@ object UserInfoModel {
       setString += """and id = {id}"""
       params = params :+ NamedParameter("id", idThree.id.get)
     }
-    if (idThree.openId.isDefined) {
+    if (idThree.openId.isDefined && idThree.openId.get != null) {
       setString += """and open_id = {openId}"""
       params = params :+ NamedParameter("openId", idThree.openId.get)
     }
-    if (idThree.unionId.isDefined) {
+    if (idThree.unionId.isDefined && idThree.unionId.get != null) {
       setString += """and union_id = {unionId}"""
       params = params :+ NamedParameter("unionId", idThree.unionId.get)
     }
-    if (idThree.idType.isDefined) {
+    if (idThree.idType.isDefined && idThree.idType.get != null) {
       setString += """and id_type = {idType}"""
       params = params :+ NamedParameter("idType", idThree.idType.get)
     }

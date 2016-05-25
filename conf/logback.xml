@@ -61,13 +61,11 @@
     <!-- additivity=false ensures access log data only goes to the access log -->
     <logger name="access" level="INFO" additivity="false">
         <appender-ref ref="ACCESS_FILE" />
-        <appender-ref ref="STDOUT" />
         <appender-ref ref="ASYNC_CUSTOM"/>
     </logger>
 
 
     <root level="INFO">
-        <appender-ref ref="ASYNC_STDOUT" />
         <appender-ref ref="ASYNC_FILE" />
         <appender-ref ref="ASYNC_CUSTOM"/>
     </root>

@@ -23,8 +23,13 @@ object SysParUtil {
   val WECHAT_USER_INFO:String = ConfigFactory.defaultApplication.getString("weixin.user.info")
 
   val SMS_TIMES:Integer = ConfigFactory.defaultApplication.getInt("send.sms.times")
-  var REDIS_URL: String = ConfigFactory.defaultApplication.getString("redis.host")
-  var REDIS_PASSWORD: String = ConfigFactory.defaultApplication.getString("redis.password")
-  var REDIS_PORT: Integer = ConfigFactory.defaultApplication.getInt("redis.port")
-  var REDIS_CHANNEL: String = ConfigFactory.defaultApplication.getString("redis.channel")
+  val REDIS_URL: String = ConfigFactory.defaultApplication.getString("redis.host")
+  val REDIS_PASSWORD: String = ConfigFactory.defaultApplication.getString("redis.password")
+  val REDIS_PORT: Integer = ConfigFactory.defaultApplication.getInt("redis.port")
+  val REDIS_CHANNEL: String = ConfigFactory.defaultApplication.getString("redis.channel")
+
+  val QQ_APPID:String = ConfigFactory.defaultApplication.getString("qq.appid")
+  val QQ_SECRET:String = ConfigFactory.defaultApplication.getString("qq.secret")
+  val QQ_SEVER:String = ConfigFactory.defaultApplication.getString("qq.server")
+  val QQ_GET_INFO:String = ConfigFactory.defaultApplication.getString("qq.get_info")
 }
