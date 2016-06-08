@@ -29,6 +29,8 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
 
   import auth.Authenticated
 
+  val idTypeMatch = "W|WO|A|Q|S|B"
+
   /**
     * 登录操作
     *
@@ -163,7 +165,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                   case Some(userOpen) =>
                     val token = login(openUser, request.remoteAddress)
                     if (token != null) {
-                      if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A|S") && data.openId.isDefined) {
+                      if (data.idType.isDefined && data.idType.get.matches(idTypeMatch) && data.openId.isDefined) {
                         wechatUserInfoActor ! WechatUser(userOpen.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                       }
                       Ok(Json.obj(
@@ -217,7 +219,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                 openUser = UserOpen(None, None, Some(password), Some(phone), None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
                 val token = login(openUser, request.remoteAddress)
                 if (token != null) {
-                  if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A|S") && data.openId.isDefined) {
+                  if (data.idType.isDefined && data.idType.get.matches(idTypeMatch) && data.openId.isDefined) {
                     wechatUserInfoActor ! WechatUser(userOpen.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                   }
                   Ok(Json.obj(
@@ -313,7 +315,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
 
                   if (verifyLockTimes == null) {
                     if (token != null) {
-                      if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A|S") && data.openId.isDefined) {
+                      if (data.idType.isDefined && data.idType.get.matches(idTypeMatch) && data.openId.isDefined) {
                         wechatUserInfoActor ! WechatUser(userInfo.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                       }
                       Ok(Json.obj(
@@ -329,7 +331,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     Logger.info(s"输入错误次数：$verifyLockTimes")
                     if (token != null) {
                       cache_client.delete(phone + "_check")
-                      if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A|S") && data.openId.isDefined) {
+                      if (data.idType.isDefined && data.idType.get.matches(idTypeMatch) && data.openId.isDefined) {
                         wechatUserInfoActor ! WechatUser(userInfo.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                       }
                       Ok(Json.obj(
@@ -347,7 +349,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
                     } else if (cache_client.get(code.toUpperCase) != null && cache_client.get(code.toUpperCase).equals(code.toUpperCase)) {
                       if (token != null) {
                         cache_client.delete(phone + "_check")
-                        if (data.idType.isDefined && data.idType.get.matches("W|WO|Q|A|S") && data.openId.isDefined) {
+                        if (data.idType.isDefined && data.idType.get.matches(idTypeMatch) && data.openId.isDefined) {
                           wechatUserInfoActor ! WechatUser(userInfo.userId.get, data.accessToken.orNull, data.openId.get, data.unionId.orNull,data.idType.get)
                         }
                         Ok(Json.obj(
@@ -407,8 +409,10 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
     * @return
     */
   def verify_open_user(openId: String, idType: String, unionId: String) = Action { implicit request =>
-    if (openId != "" && idType != null && idType.matches("W|WO|A|Q|S")) {
+    if (openId != "" && idType != null && idType.matches(idTypeMatch)) {
       val idThree: IdThree = IdThree(None, Option(openId), Option(idType), None, Option(unionId))
+
+      Logger.error("前台数据:"+idThree)
 
       UserInfoModel.id_three_query(idThree) match {
         case Some(userOpen) =>

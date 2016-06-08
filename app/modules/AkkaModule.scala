@@ -17,5 +17,6 @@ class AkkaModule extends AbstractModule with AkkaGuiceSupport {
     bindActor[WechatUserInfoActor]("wechatUserInfoActor")
     bindActor[IdRunActor]("idRunActor")
     bindActor[MnsActor]("mnsActor")
+    bindActor[SmsContentActor]("smsContentActor")
   }
 }
