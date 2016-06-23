@@ -45,7 +45,7 @@ object CouponsModel {
   def searchAllCoupons(couponsVo: CouponsVo): List[CouponsVo] = {
     val params: Seq[NamedParameter] = Seq("userId" -> couponsVo.userId.get, "state" -> couponsVo.state.get)
     DB.withConnection("shopping") { implicit conn =>
-      SQL( """select count(*) OVER(order by cate_id) AS coupons_count, coup_id ,user_id,cate_id,denomination,start_at,end_at,state,order_id,use_at,limit_quota from sp_coupons WHERE user_id = {userId} and and state in ('Y','N','S')""").on(params: _*).as(couponsMapping.*)
+      SQL( """select count(*) OVER(order by cate_id) AS coupons_count, coup_id ,user_id,cate_id,denomination,start_at,end_at,state,order_id,use_at,limit_quota from sp_coupons WHERE user_id = {userId} and state in ('Y','N','S')""").on(params: _*).as(couponsMapping.*)
     }
   }
 }
