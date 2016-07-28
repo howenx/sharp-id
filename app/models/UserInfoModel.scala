@@ -202,7 +202,7 @@ object UserInfoModel {
   def insertAddress(address: Address): Option[Long] = {
     DB.withConnection() { implicit conn =>
 
-      var columnString: String = """user_id,tel,"name",delivery_city,delivery_detail,create_at,or_default"""
+      var columnString: String = """user_id,tel,"name",delivery_city,delivery_detail,or_default,create_at"""
       var params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
         , "deliveryCity" -> address.deliveryCity.get, "deliveryDetail" -> address.deliveryDetail.get, "userId" -> address.userId.get
       )
