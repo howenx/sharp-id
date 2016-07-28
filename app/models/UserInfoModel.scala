@@ -201,18 +201,26 @@ object UserInfoModel {
 
   def insertAddress(address: Address): Option[Long] = {
     DB.withConnection() { implicit conn =>
+
+      var columnString: String = """user_id,tel, "name",delivery_city,delivery_detail,create_at"""
       var params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
         , "deliveryCity" -> address.deliveryCity.get, "deliveryDetail" -> address.deliveryDetail.get, "userId" -> address.userId.get
-        , "idCardNum" -> address.idCardNum.get
       )
+      var valueString: String = "{userId},{tel},{name},{deliveryCity}::jsonb,{deliveryDetail},{orDefault},CURRENT_TIMESTAMP(0) "
+
+      if (address.idCardNum.isDefined) {
+        params = params :+ NamedParameter("idCardNum", address.idCardNum.get)
+        columnString += """,id_card_num"""
+        valueString += """,{idCardNum} """
+      }
+
       if (address.orDefault.isDefined) {
         if (address.orDefault.get == 0) {
           params = params :+ NamedParameter("orDefault", false)
         } else params = params :+ NamedParameter("orDefault", true)
       }
 
-      SQL(
-        """ insert into  id_address(user_id,tel, "name",delivery_city,delivery_detail,id_card_num,or_default,create_at)values({userId},{tel},{name},{deliveryCity}::jsonb,{deliveryDetail},{idCardNum},{orDefault},CURRENT_TIMESTAMP(0) )""").on(params: _*).executeInsert()
+      SQL(""" insert into  id_address(""" + columnString + """)values(""" + valueString +""")""").on(params: _*).executeInsert()
     }
   }
 
