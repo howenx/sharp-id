@@ -202,7 +202,7 @@ object UserInfoModel {
   def insertAddress(address: Address): Option[Long] = {
     DB.withConnection() { implicit conn =>
 
-      var columnString: String = """user_id,tel, "name",delivery_city,delivery_detail,create_at"""
+      var columnString: String = """user_id,tel,"name",delivery_city,delivery_detail,create_at"""
       var params: Seq[NamedParameter] = Seq("tel" -> address.tel.get, "name" -> address.name.get
         , "deliveryCity" -> address.deliveryCity.get, "deliveryDetail" -> address.deliveryDetail.get, "userId" -> address.userId.get
       )
@@ -219,7 +219,7 @@ object UserInfoModel {
           params = params :+ NamedParameter("orDefault", false)
         } else params = params :+ NamedParameter("orDefault", true)
       }
-
+      Logger.error("字断: "+columnString +"---------> "+ valueString + params.mkString)
       SQL(""" insert into  id_address(""" + columnString + """)values(""" + valueString +""")""").on(params: _*).executeInsert()
     }
   }
