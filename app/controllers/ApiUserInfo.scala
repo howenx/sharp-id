@@ -3,7 +3,6 @@ package controllers
 import java.io.ByteArrayInputStream
 import javax.inject.{Inject, Named}
 
-import util.JsonUtil
 import actor.OSSIS
 import akka.actor.ActorRef
 import filters.Authentication
@@ -14,7 +13,8 @@ import net.spy.memcached.MemcachedClient
 import org.apache.commons.codec.binary.Base64
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import play.api.libs.json.{util, _}
+import util.JsonUtil
+import play.api.libs.json._
 import play.api.mvc.{BodyParsers, Controller}
 import play.api.{Configuration, Logger}
 
@@ -43,7 +43,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     data.fold(
       errors => {
         Logger.error("Json校验错误信息--->" + errors.toString())
-        cache.put("message", new Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue))
+        cache.put("message", Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue))
         Ok(JsonUtil.toJson(cache))
       },
       data => {
@@ -107,7 +107,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     data.fold(
       errors => {
         Logger.error("Json校验错误信息--->" + errors.toString())
-        cache.put("message", new Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue))
+        cache.put("message", Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue))
         Ok(JsonUtil.toJson(cache))
       },
       data => {
@@ -117,14 +117,14 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
 
           //如果要设置当前新加入的地址为默认地址
           if (data.orDefault.get == 1) {
-            val address: Address = new Address(None, None, None, None, None, Some(user_id.toLong), Some(0), None, None, None)
+            val address: Address = Address(None, None, None, None, None, Some(user_id.toLong), Some(0), None, None, None)
             val result = UserInfoModel.updateAddress(address)
             if (result >= 0) {
-              val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
+              val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
               val result = UserInfoModel.insertAddress(address)
               result match {
                 case Some(content) =>
-                  cache.put("address", new Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None))
+                  cache.put("address", Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None))
                   cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                   Logger.info("user insert address: " + address.name)
                   Ok(JsonUtil.toJson(cache))
@@ -137,14 +137,14 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
               Ok(JsonUtil.toJson(cache))
             }
           } else {
-            val address: Address = new Address(None, None, None, None, None, Some(user_id.toLong), Some(1), None, None, None)
+            val address: Address = Address(None, None, None, None, None, Some(user_id.toLong), Some(1), None, None, None)
             //先判断在insert中的是非默认地址时,如果此用户已经存在默认地址,那么就插入非默认地址,否则就把当前地址作为默认地址插入
             if (UserInfoModel.allAddress(address).nonEmpty) {
-              val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(0), data.idCardNum, data.orDestroy, None)
+              val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(0), data.idCardNum, data.orDestroy, None)
               val result = UserInfoModel.insertAddress(address)
               result match {
                 case Some(content) =>
-                  cache.put("address", new Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(0), data.idCardNum, data.orDestroy, None))
+                  cache.put("address", Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(0), data.idCardNum, data.orDestroy, None))
                   cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                   Logger.info("user insert address: " + address.name)
                   Ok(JsonUtil.toJson(cache))
@@ -153,11 +153,11 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                   Ok(JsonUtil.toJson(cache))
               }
             } else {
-              val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
+              val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
               val result = UserInfoModel.insertAddress(address)
               result match {
                 case Some(content) =>
-                  cache.put("address", new Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None))
+                  cache.put("address", Address(Some(content), data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None))
                   cache.put("message", Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue))
                   Logger.info("user insert address: " + address.name)
                   Ok(JsonUtil.toJson(cache))
@@ -186,7 +186,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
     data.fold(
       errors => {
         Logger.error("Json校验错误信息--->" + errors.toString())
-        cache.put("message", new Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue))
+        cache.put("message", Message(ChessPiece.BAD_PARAMETER.string, ChessPiece.BAD_PARAMETER.pointValue))
         Ok(JsonUtil.toJson(cache))
       },
       data => {
@@ -196,10 +196,10 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
           if (data.orDefault.isDefined) {
             if (data.orDefault.get == 1) {
               //如果要设置当前地址为默认地址,那么更新此用户下所有地址为非默认地址
-              val address: Address = new Address(None, None, None, None, None, Some(user_id.toLong), Some(0), None, None, None)
+              val address: Address = Address(None, None, None, None, None, Some(user_id.toLong), Some(0), None, None, None)
               val result = UserInfoModel.updateAddress(address)
               if (result >= 0) {
-                val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
+                val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
                 val result = UserInfoModel.updateAddress(address)
                 if (result >= 0) {
                   Logger.info("user update address: " + address.name.getOrElse(""))
@@ -215,11 +215,11 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
               }
             } else {
               //如果用户要设置当前地址为非默认地址,那么就查询当前是否有其他地址为默认地址,否则仍旧设置当前地址为默认地址
-              val address: Address = new Address(None, None, None, None, None, Some(user_id.toLong), Some(1), None, Some(false), None)
+              val address: Address = Address(None, None, None, None, None, Some(user_id.toLong), Some(1), None, Some(false), None)
               val addList: List[Address] = UserInfoModel.allAddress(address)
               if (addList.nonEmpty) {
                 if (!addList.head.addId.equals(data.addId)) {
-                  val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(0), data.idCardNum, data.orDestroy, None)
+                  val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(0), data.idCardNum, data.orDestroy, None)
                   val result = UserInfoModel.updateAddress(address)
                   if (result >= 0) {
                     Logger.info("user update address: " + address.name.getOrElse(""))
@@ -235,7 +235,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                   Ok(JsonUtil.toJson(cache))
                 }
               } else {
-                val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
+                val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), Some(1), data.idCardNum, data.orDestroy, None)
                 val result = UserInfoModel.updateAddress(address)
                 if (result >= 0) {
                   Logger.info("user update address: " + address.name.getOrElse(""))
@@ -255,14 +255,14 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
           //删除的时候也要判断,如果删除的是默认地址,那么如果用此用户去查询还有其他的地址,那么随便取一个设置为默认地址,如果没有其他地址,不管,如果删除的是非默认地址,也不管
           if (data.orDefault.isDefined) {
             if (data.orDefault.get == 1) {
-              val address: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), data.orDefault, data.idCardNum, Some(true), None)
+              val address: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), data.orDefault, data.idCardNum, Some(true), None)
               val result = UserInfoModel.updateAddress(address)
               if (result >= 0) {
-                val address: Address = new Address(None, None, None, None, None, Some(user_id.toLong), None, None, None, None)
+                val address: Address = Address(None, None, None, None, None, Some(user_id.toLong), None, None, None, None)
                 val adds: List[Address] = UserInfoModel.allAddress(address)
                 if (adds.nonEmpty) {
                   val add_temp = adds.last
-                  val new_add = new Address(add_temp.addId, None, None, None, None, Some(user_id.toLong), Some(1), None, None, None)
+                  val new_add = Address(add_temp.addId, None, None, None, None, Some(user_id.toLong), Some(1), None, None, None)
                   val result = UserInfoModel.updateAddress(new_add)
                   if (result >= 0) {
                     Logger.info("user delete address: " + address.name.getOrElse(""))
@@ -278,7 +278,7 @@ class ApiUserInfo @Inject()(cache_client: MemcachedClient, @Named("sms") sms: Ac
                 }
               }
             }
-            val address_del: Address = new Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), data.orDefault, data.idCardNum, Some(true), None)
+            val address_del: Address = Address(data.addId, data.tel, data.name, data.deliveryCity, data.deliveryDetail, Some(user_id.toLong), data.orDefault, data.idCardNum, Some(true), None)
             val result = UserInfoModel.updateAddress(address_del)
             if (result >= 0) {
               Logger.info("user delete address: " + address_del.name.getOrElse(""))

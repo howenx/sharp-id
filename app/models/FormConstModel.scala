@@ -14,7 +14,7 @@ import play.api.libs.json._
 
 case class UserPhoneLoginForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String], idType: Option[String], unionId: Option[String])
 
-case class ApiSendCodeForm(phone: String, msg: String)
+case class ApiSendCodeForm(phone: String, msg: String, smsType: Option[String])
 
 case class ApiRegForm(phone: String, password: String, code: String, accessToken: Option[String], openId: Option[String], idType: Option[String], unionId: Option[String])
 
@@ -72,7 +72,8 @@ object FormConstModel {
     "phone" -> nonEmptyText.verifying(minLength(11), maxLength(11)).verifying("Bad phone regex", {
       _.matches("""[1][345678]\d{9}""")
     }),
-    "msg" -> nonEmptyText
+    "msg" -> nonEmptyText,
+    "smsType" -> optional(text)
   )(ApiSendCodeForm.apply)(ApiSendCodeForm.unapply))
 
   /**
