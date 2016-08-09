@@ -89,7 +89,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
               cache_client.incr("hmm-sms" + phone, Integer.valueOf(1))
             }
             val code: String = String.valueOf((100000 + Math.random * 900000).toInt)
-            sms ! SMS(phone, code, data.smsType.getOrElse(SMSType.reset))
+            sms ! SMS(phone, code, data.smsType.getOrElse(SMSType.comm))
             cache_client.set("api" + phone, SMS_VALID_TIME * 60, code)
             Logger.info(s"用户手机号：$phone api发送验证码成功,发送次数" + (if (code_times == null) 0 else code_times) + "次")
             Ok(Json.obj("message" -> Message(ChessPiece.SUCCESS.string, ChessPiece.SUCCESS.pointValue)))
