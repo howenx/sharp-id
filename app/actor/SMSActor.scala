@@ -49,12 +49,11 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
 
       val code = sms.code
 
-      val smsPurpose: String = sms.sms_type match {
-        case SMSType.register => s"您的手机号正在申请注册$smsPurposeName"+","
-        case SMSType.reset => s"您的手机号正在申请重置$smsPurposeName"+"账户密码,"
+      val content: String = sms.sms_type match {
+        case SMSType.register => s"感谢您注册$smsPurposeName"+","+s"验证码:$code($validTime 分钟内有效)。$m5cSign"
+        case SMSType.reset => s"验证码:$code($validTime 分钟内有效),"+s"请按照页面提示完成密码重置,感谢使用$smsPurposeName!$m5cSign"
         case SMSType.comm => ""
       }
-      val content: String = smsPurpose+s"验证码:$code($validTime 分钟内有效)。感谢您的使用!$m5cSign"
       val key = Codecs.md5((sms.phone_num + sms.sms_type).getBytes)
       var bl: Boolean = false
       if (cache_client.get(key) == null) {
