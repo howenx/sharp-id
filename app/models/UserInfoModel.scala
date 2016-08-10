@@ -299,7 +299,7 @@ object UserInfoModel {
       params = params :+ NamedParameter("nickname", au.nickname.get)
     } else {
       val phone: String = if (au.phoneNum.isDefined) au.phoneNum.get else scala.util.Random.nextString(11)
-      params = params :+ NamedParameter("nickname", "HMM " + phone.substring(0, 3) + "****" + phone.substring(7, 11))
+      params = params :+ NamedParameter("nickname", "KG " + phone.substring(0, 3) + "****" + phone.substring(7, 11))
     }
     if (au.gender.isDefined) {
       columnString += ",gender"
@@ -479,7 +479,7 @@ object UserInfoModel {
 
 
   def insert(phone: String, passwd: String, ip: String): Option[Long] = {
-    val nickname = "HMM " + phone.substring(0, 3) + "****" + phone.substring(7, 11)
+    val nickname = "KG " + phone.substring(0, 3) + "****" + phone.substring(7, 11)
     DB.withConnection() { implicit conn =>
       SQL( """insert into "ID" (nickname,passwd,phone_num,reg_ip,reg_dt) values ({nickname},user_passwd(currval('"ID_user_id_seq"'::regclass),{passwd}),{phone_num},cidr({reg_ip}),CURRENT_TIMESTAMP(0)) """).on("nickname" -> nickname, "passwd" -> passwd, "phone_num" -> phone, "reg_ip" -> ip).executeInsert()
     }
