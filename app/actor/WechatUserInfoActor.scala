@@ -73,11 +73,17 @@ class WechatUserInfoActor @Inject()(@Named("oss") oss: ActorRef, ws: WSClient, c
 
 
       val idThree: IdThree = IdThree(None, Option(wechatUser.openId), Option(wechatUser.idType), Option(wechatUser.userId), Option(wechatUser.unionId))
-      if (UserInfoModel.id_three_insert(idThree).isDefined) {
-        Logger.info("Id three insert success : " + idThree.userId.get)
-      } else {
-        Logger.info("Id three insert error : " + idThree.userId.get)
+      UserInfoModel.id_three_query(idThree) match {
+        case Some(userOpen) =>
+          Logger.info("Id three had existed : " + idThree.userId.get)
+        case None =>
+          if (UserInfoModel.id_three_insert(idThree).isDefined) {
+            Logger.info("Id three insert success : " + idThree.userId.get)
+          } else {
+            Logger.info("Id three insert error : " + idThree.userId.get)
+          }
       }
+
 
   }
 
