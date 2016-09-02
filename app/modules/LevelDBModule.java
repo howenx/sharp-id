@@ -2,6 +2,7 @@ package modules;
 
 import com.google.inject.AbstractModule;
 import redis.clients.jedis.Jedis;
+import util.ExecSubscribe;
 import util.LogUtil;
 import util.RedisPool;
 
@@ -15,5 +16,6 @@ public class LevelDBModule extends AbstractModule {
     protected void configure() {
         bind(LogUtil.class).asEagerSingleton();
         bind(RedisPool.class).asEagerSingleton();
+        bind(ExecSubscribe.class).asEagerSingleton();
     }
 }
