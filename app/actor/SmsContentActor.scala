@@ -56,7 +56,7 @@ class SmsContentActor @Inject()(ws: WSClient, configuration: Configuration, cach
       }
       if (bl) {
 
-        Logger.error(s"\n$content\n")
+        Logger.info(s"\n$content\n")
 
         val format = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
         val date = format.format(new java.util.Date())
@@ -76,7 +76,7 @@ class SmsContentActor @Inject()(ws: WSClient, configuration: Configuration, cach
         )
 
         wsRequest.withHeaders("Accept" -> "application/json","Content-Type" -> "application/json;charset=utf-8","Authorization"->authorization(date)).post(params).map { response =>
-          Logger.error(response.body)
+          Logger.info(response.body)
         }
       }
   }

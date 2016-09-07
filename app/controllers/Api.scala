@@ -412,7 +412,7 @@ class Api @Inject()(cache_client: MemcachedClient, @Named("sms") sms: ActorRef, 
     if (openId != "" && idType != null && idType.matches(idTypeMatch)) {
       val idThree: IdThree = IdThree(None, Option(openId), Option(idType), None, Option(unionId))
 
-      Logger.error("前台数据:"+idThree)
+      Logger.info("前台数据:"+idThree)
 
       UserInfoModel.id_three_query(idThree) match {
         case Some(userOpen) =>

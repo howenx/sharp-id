@@ -72,7 +72,7 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
       }
       if (bl) {
 
-        Logger.error(s"\n$content\n")
+        Logger.info(s"\n$content\n")
 
         val contentUrlEncode: String = URLEncoder.encode(content, m5cEncode)
         val password_md5:String =Codecs.md5(m5cPassword.getBytes()).toLowerCase()
@@ -81,7 +81,7 @@ class SMSActor @Inject()(ws: WSClient, configuration: Configuration, cache_clien
 
         val wsRequest: WSRequest = ws.url(m5cUrl+params)
         wsRequest.get().map { response =>
-          Logger.error(response.body)
+          Logger.info(response.body)
         }
       }
   }

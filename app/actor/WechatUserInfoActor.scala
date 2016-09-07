@@ -33,7 +33,7 @@ class WechatUserInfoActor @Inject()(@Named("oss") oss: ActorRef, ws: WSClient, c
   override def receive = {
     case wechatUser: WechatUser =>
 
-      Logger.error("所有数据:--->" + wechatUser.toString)
+      Logger.info("所有数据:--->" + wechatUser.toString)
 
       if (wechatUser.accessToken != null && wechatUser.idType.matches("WO|W")) {
         ws.url(SysParUtil.WECHAT_USER_INFO + "access_token=" + wechatUser.accessToken + "&openid=" + wechatUser.accessToken + "&lang=zh_CN").get().map(wsResponse => {
@@ -121,7 +121,7 @@ class WechatUserInfoActor @Inject()(@Named("oss") oss: ActorRef, ws: WSClient, c
     val url: String = sb.toString().substring(0, sb.length - 1)
 
     ws.url(url).get().map(wsResponse => {
-      Logger.error("获取QQ用户信息返回--->" + wsResponse.json.toString())
+      Logger.info("获取QQ用户信息返回--->" + wsResponse.json.toString())
       val nickname: Option[String] = wsResponse.json.\("nickname").asOpt[String]
       val gender: Option[String] = wsResponse.json.\("gender").asOpt[String] match {
         case Some("男") => Some("M")
