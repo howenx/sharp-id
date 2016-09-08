@@ -116,7 +116,7 @@ object JsonConstModel {
       (__ \ "tel").readNullable[String](minLength[String](11) keepAnd maxLength[String](11) keepAnd pattern("""[1][345678]\d{9}""".r, "tel phone error")) and
       (__ \ "name").readNullable[String](minLength[String](2) keepAnd maxLength[String](15) keepAnd pattern("""[a-zA-Z0-9\u4e00-\u9fa5]+""".r, "name error")) and
       (__ \ "deliveryCity").readNullable[String] and
-      (__ \ "deliveryDetail").readNullable[String](minLength[String](5) keepAnd maxLength[String](50) keepAnd pattern("""[a-zA-Z0-9\u4e00-\u9fa5]+""".r, "deliveryDetail error")) and
+      (__ \ "deliveryDetail").readNullable[String](minLength[String](5) keepAnd maxLength[String](50) keepAnd pattern("""[a-zA-Z0-9-\u4e00-\u9fa5]+""".r, "deliveryDetail error")) and
       (__ \ "userId").readNullable[Long] and
       (__ \ "orDefault").readNullable[Int] and
       (__ \ "idCardNum").readNullable[String](id()) and
